@@ -178,3 +178,26 @@ Rules:
 8. **Small, verifiable steps.** Prefer small changes with tests. Report exactly what was and wasn't verified.
 9. **Git:** don't commit, push or open PRs unless asked. When asked, follow §11.
 10. **Safety language:** in UI copy, docs and demo material, describe GeoRakshak as decision support, never as an official warning authority.
+
+
+## Git Ownership
+
+The human developer owns the Git history.
+
+Claude MUST NOT:
+- create commits
+- amend commits
+- push to remote repositories
+- force push
+- rebase
+- reset commits
+- modify Git history
+
+Claude MAY:
+- inspect git status
+- inspect git diff
+- inspect repository history
+- run tests
+- report changed files
+
+The human developer will review, stage, commit, and push changes manually.
