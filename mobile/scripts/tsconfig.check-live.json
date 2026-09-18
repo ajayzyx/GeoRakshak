@@ -1,0 +1,18 @@
+// Compiles scripts/check-live.ts and the core modules it imports to CommonJS,
+// so plain Node can run them (see scripts/run-check-live.mjs).
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "types": ["node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "rootDir": "..",
+    "sourceMap": true
+  },
+  "files": ["check-live.ts"]
+}
