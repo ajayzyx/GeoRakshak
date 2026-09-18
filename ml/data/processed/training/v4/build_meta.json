@@ -1,0 +1,189 @@
+{
+  "generated_at": "2026-09-17T21:53:29+00:00",
+  "source_points": "identical to ml/data/processed/training/v3 (same seeds, same designs)",
+  "hydrology": {
+    "source": "derived from Copernicus DEM GLO-90 (local tiles)",
+    "window_m": 6000.0,
+    "res_m": 90.0,
+    "drainage_threshold_m2": 250000.0,
+    "features": [
+      "flow_acc_log10_m2_mean",
+      "twi_mean",
+      "elev_above_window_min_m",
+      "plan_curvature_mean",
+      "profile_curvature_mean",
+      "roughness_tri_m"
+    ],
+    "reported_only": [
+      "dist_to_drainage_m"
+    ],
+    "algorithms": "priority-flood fill; D8 accumulation (window-truncated); TWI with tan(beta) floored at tan(0.5 deg); Zevenbergen-Thorne curvature; TRI"
+  },
+  "soil": {
+    "features": [
+      "clay_pct",
+      "sand_pct",
+      "bdod_kg_dm3",
+      "cfvo_pct_vol",
+      "bedrock_depth_cm"
+    ],
+    "layers": {
+      "clay_5-15cm": {
+        "endpoint": "https://maps.isric.org/mapserv?map=/map/clay.map&\u2026&COVERAGEID=clay_5-15cm_mean",
+        "file": "ner_clay_5-15cm.tif",
+        "width": 4202,
+        "height": 3347,
+        "res_deg": [
+          0.0022608281770585405,
+          0.0023902001792650137
+        ],
+        "dtype": "int16",
+        "unit": "percent",
+        "conversion_factor": 0.1,
+        "zero_share": 0.0715,
+        "note": "value 0 is treated as no data (MapServer emits 0 outside the soil mask)"
+      },
+      "sand_5-15cm": {
+        "endpoint": "https://maps.isric.org/mapserv?map=/map/sand.map&\u2026&COVERAGEID=sand_5-15cm_mean",
+        "file": "ner_sand_5-15cm.tif",
+        "width": 4202,
+        "height": 3347,
+        "res_deg": [
+          0.0022608281770585405,
+          0.0023902001792650137
+        ],
+        "dtype": "int16",
+        "unit": "percent",
+        "conversion_factor": 0.1,
+        "zero_share": 0.0715,
+        "note": "value 0 is treated as no data (MapServer emits 0 outside the soil mask)"
+      },
+      "bdod_5-15cm": {
+        "endpoint": "https://maps.isric.org/mapserv?map=/map/bdod.map&\u2026&COVERAGEID=bdod_5-15cm_mean",
+        "file": "ner_bdod_5-15cm.tif",
+        "width": 4202,
+        "height": 3347,
+        "res_deg": [
+          0.0022608281770585405,
+          0.0023902001792650137
+        ],
+        "dtype": "int16",
+        "unit": "kg/dm3",
+        "conversion_factor": 0.01,
+        "zero_share": 0.08,
+        "note": "value 0 is treated as no data (MapServer emits 0 outside the soil mask)"
+      },
+      "cfvo_5-15cm": {
+        "endpoint": "https://maps.isric.org/mapserv?map=/map/cfvo.map&\u2026&COVERAGEID=cfvo_5-15cm_mean",
+        "file": "ner_cfvo_5-15cm.tif",
+        "width": 4202,
+        "height": 3347,
+        "res_deg": [
+          0.0022608281770585405,
+          0.0023902001792650137
+        ],
+        "dtype": "int16",
+        "unit": "percent_volume",
+        "conversion_factor": 0.1,
+        "zero_share": 0.0715,
+        "note": "value 0 is treated as no data (MapServer emits 0 outside the soil mask)"
+      },
+      "bdticm_2017": {
+        "endpoint": "https://files.isric.org/soilgrids/former/2017-03-10/data/BDTICM_M_250m_ll.tif",
+        "file": "ner_bdticm_2017.tif",
+        "width": 4560,
+        "height": 3840,
+        "res_deg": [
+          0.0020833330000009018,
+          0.0020833330000009018
+        ],
+        "dtype": "int32",
+        "unit": "cm (absolute depth to bedrock)",
+        "conversion_factor": 1,
+        "nodata": -32768.0,
+        "missing_share": 0.0714,
+        "note": "SoilGrids 2017 (v1) product; v2 has no depth-to-bedrock layer"
+      }
+    },
+    "licence": "CC-BY 4.0 (ISRIC data policy, https://www.isric.org/about/data-policy)",
+    "attribution": "Soil data: ISRIC - World Soil Information, SoilGrids v2 (250 m) and SoilGrids 2017 BDTICM",
+    "retrieved_at": "2026-09-17T20:51:04+00:00"
+  },
+  "missingness": {
+    "positives.csv": {
+      "rows": 1000,
+      "flow_acc_log10_m2_mean": 0.002,
+      "twi_mean": 0.002,
+      "elev_above_window_min_m": 0.002,
+      "plan_curvature_mean": 0.002,
+      "profile_curvature_mean": 0.002,
+      "roughness_tri_m": 0.002,
+      "dist_to_drainage_m": 0.002,
+      "clay_pct": 0.005,
+      "sand_pct": 0.005,
+      "bdod_kg_dm3": 0.006,
+      "cfvo_pct_vol": 0.005,
+      "bedrock_depth_cm": 0.002
+    },
+    "negatives_naive.csv": {
+      "rows": 2999,
+      "flow_acc_log10_m2_mean": 0.001,
+      "twi_mean": 0.001,
+      "elev_above_window_min_m": 0.001,
+      "plan_curvature_mean": 0.001,
+      "profile_curvature_mean": 0.001,
+      "roughness_tri_m": 0.001,
+      "dist_to_drainage_m": 0.001,
+      "clay_pct": 0.0033,
+      "sand_pct": 0.0033,
+      "bdod_kg_dm3": 0.0033,
+      "cfvo_pct_vol": 0.0033,
+      "bedrock_depth_cm": 0.003
+    },
+    "negatives_exposure.csv": {
+      "rows": 2999,
+      "flow_acc_log10_m2_mean": 0.0007,
+      "twi_mean": 0.0007,
+      "elev_above_window_min_m": 0.0007,
+      "plan_curvature_mean": 0.0007,
+      "profile_curvature_mean": 0.0007,
+      "roughness_tri_m": 0.0007,
+      "dist_to_drainage_m": 0.0007,
+      "clay_pct": 0.0057,
+      "sand_pct": 0.0057,
+      "bdod_kg_dm3": 0.0057,
+      "cfvo_pct_vol": 0.0057,
+      "bedrock_depth_cm": 0.002
+    },
+    "background_ner.csv": {
+      "rows": 1500,
+      "flow_acc_log10_m2_mean": 0.0,
+      "twi_mean": 0.0,
+      "elev_above_window_min_m": 0.0,
+      "plan_curvature_mean": 0.0,
+      "profile_curvature_mean": 0.0,
+      "roughness_tri_m": 0.0,
+      "dist_to_drainage_m": 0.0073,
+      "clay_pct": 0.048,
+      "sand_pct": 0.048,
+      "bdod_kg_dm3": 0.048,
+      "cfvo_pct_vol": 0.048,
+      "bedrock_depth_cm": 0.058
+    },
+    "pilot_grid_features.csv": {
+      "rows": 2798,
+      "flow_acc_log10_m2_mean": 0.0,
+      "twi_mean": 0.0,
+      "elev_above_window_min_m": 0.0,
+      "plan_curvature_mean": 0.0,
+      "profile_curvature_mean": 0.0,
+      "roughness_tri_m": 0.0,
+      "dist_to_drainage_m": 0.0,
+      "clay_pct": 0.0032,
+      "sand_pct": 0.0032,
+      "bdod_kg_dm3": 0.0032,
+      "cfvo_pct_vol": 0.0032,
+      "bedrock_depth_cm": 0.0
+    }
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "generated_at": "2026-09-17T17:58:36+00:00",
+  "seed": 42,
+  "inventory": {
+    "source_slug": "nasa-glc",
+    "file": "data/raw/nasa_glc/coolr_reports_points_ner_bbox.geojson",
+    "gsi_used": false,
+    "records_total": 879
+  },
+  "positives": {
+    "candidates": 106,
+    "kept": 100,
+    "dropped": {
+      "within_500m": 2,
+      "same_event_within_2km": 4
+    },
+    "with_worldcover": 100,
+    "dropped_no_worldcover": 0
+  },
+  "exclusion_records": 523,
+  "neg_ratio": 5,
+  "neg_max_dist_m": 30000.0,
+  "exposure_bins": [
+    [
+      -1e-09,
+      0.0
+    ],
+    [
+      0.0,
+      0.1
+    ],
+    [
+      0.1,
+      0.3
+    ],
+    [
+      0.3,
+      0.6
+    ],
+    [
+      0.6,
+      1.0
+    ]
+  ],
+  "positive_exposure_bins": {
+    "0": 10,
+    "1": 10,
+    "2": 24,
+    "3": 19,
+    "4": 37
+  },
+  "negatives": {
+    "naive": 500,
+    "exposure_controlled": 500,
+    "exposure_quota": {
+      "0": 50,
+      "1": 50,
+      "2": 120,
+      "3": 95,
+      "4": 185
+    },
+    "exposure_filled": {
+      "0": 50,
+      "1": 50,
+      "2": 120,
+      "3": 95,
+      "4": 185
+    },
+    "exposure_shortfall": {},
+    "candidates_examined_for_matching": 38085
+  },
+  "background_ner": {
+    "patches_target": 60,
+    "per_patch": 25,
+    "points": 1500,
+    "spacing_m": 1200.0,
+    "sampling": "clustered patches, area-weighted cell choice"
+  },
+  "rows": {
+    "positives": 100,
+    "negatives_naive": 500,
+    "negatives_exposure": 500,
+    "background_ner": 1500,
+    "pilot_cells": 2798
+  },
+  "dropped": {},
+  "min_positive_negative_distance_m": {
+    "naive": 2014.6,
+    "exposure": 1512.2
+  }
+}

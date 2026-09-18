@@ -1,0 +1,21 @@
+{
+  "accuracy": "1km",
+  "seed": 42,
+  "neg_ratio": 5,
+  "neg_max_dist_m": 30000.0,
+  "neg_min_dist_m": 2000.0,
+  "records_ner_india": 504,
+  "records_acc_le_5km": 269,
+  "positives_before_dedup": 106,
+  "positives_dedup": 101,
+  "negatives_sampled": 505,
+  "rows_written": 590,
+  "positives_written": 101,
+  "dropped": {
+    "dem_tile_edge": 8,
+    "worldcover_edge_or_nodata": 1,
+    "negative_in_water": 8
+  },
+  "dem_tiles": 30,
+  "worldcover_tiles": 9
+}

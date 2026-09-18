@@ -1,0 +1,60 @@
+{
+  "generated_at": "2026-09-17T19:05:36+00:00",
+  "seed": 42,
+  "inventory": {
+    "source_slug": "gsi-bhusanket",
+    "file": "data/raw/gsi/gsi_landslide_public_ner.geojson",
+    "records_ner": 8691,
+    "deduped_500m": 5275,
+    "dropped_dedup": 3416,
+    "positive_sample": 1000,
+    "sampling": "random sample of deduped records, seed 42"
+  },
+  "neg_ratio": 3,
+  "gsi_exclusion_m": 1000.0,
+  "coolr_exclusion_records": 523,
+  "positive_exposure_bins": {
+    "0": 390,
+    "1": 333,
+    "2": 216,
+    "3": 35,
+    "4": 26
+  },
+  "negatives": {
+    "naive": 2999,
+    "exposure_controlled": 2999,
+    "exposure_quota": {
+      "0": 1170,
+      "1": 999,
+      "2": 648,
+      "3": 105,
+      "4": 78
+    },
+    "exposure_filled": {
+      "0": 1170,
+      "1": 999,
+      "2": 648,
+      "3": 105,
+      "4": 78
+    },
+    "exposure_shortfall": {},
+    "candidates_examined_for_matching": 25968
+  },
+  "rows": {
+    "positives": 1000,
+    "negatives_naive": 2999,
+    "negatives_exposure": 2999
+  },
+  "dropped": {
+    "negatives_naive_dem_gap": 1,
+    "negatives_exposure_dem_gap": 1
+  },
+  "min_positive_negative_distance_m": {
+    "naive": 1003.2,
+    "exposure": 1035.6
+  },
+  "reused_from_v2": [
+    "background_ner.csv",
+    "pilot_grid_features.csv"
+  ]
+}

@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "georakshak-ml"
+version = "0.1.0"
+description = "GeoRakshak landslide risk scoring package (B0 rule-based index)"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+# Offline data pipeline only (NOT needed by the backend at runtime).
+pipeline = ["numpy", "rasterio", "pyproj", "shapely", "requests", "scikit-learn"]
+
+[tool.setuptools]
+packages = ["georakshak_ml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,460 @@
+{
+  "generated_at": "2026-09-17T15:48:46+00:00",
+  "dataset": "data/processed/training/stage_a_1km.csv",
+  "dataset_meta": {
+    "accuracy": "1km",
+    "seed": 42,
+    "neg_ratio": 5,
+    "neg_max_dist_m": 30000.0,
+    "neg_min_dist_m": 2000.0,
+    "records_ner_india": 504,
+    "records_acc_le_5km": 269,
+    "positives_before_dedup": 106,
+    "positives_dedup": 101,
+    "negatives_sampled": 505,
+    "rows_written": 590,
+    "positives_written": 101,
+    "dropped": {
+      "dem_tile_edge": 8,
+      "worldcover_edge_or_nodata": 1,
+      "negative_in_water": 8
+    },
+    "dem_tiles": 30,
+    "worldcover_tiles": 9
+  },
+  "n_samples": 590,
+  "n_positives": 101,
+  "n_blocks": 70,
+  "n_blocks_with_positives": 38,
+  "block_size_deg": 0.5,
+  "seed": 42,
+  "models": {
+    "b1_logreg[terrain]": {
+      "features": [
+        "slope_deg_mean",
+        "slope_deg_max",
+        "elevation_m_mean",
+        "relief_m"
+      ],
+      "spatial_block_cv": {
+        "folds": [
+          {
+            "n": 118,
+            "positives": 24,
+            "roc_auc": 0.5629432624113475,
+            "pr_auc": 0.3559028728675307,
+            "prevalence": 0.2033898305084746,
+            "recall_top20pct_samples": 0.2916666666666667
+          },
+          {
+            "n": 118,
+            "positives": 18,
+            "roc_auc": 0.5444444444444445,
+            "pr_auc": 0.2181261503179132,
+            "prevalence": 0.15254237288135594,
+            "recall_top20pct_samples": 0.2777777777777778
+          },
+          {
+            "n": 118,
+            "positives": 17,
+            "roc_auc": 0.6144437973209085,
+            "pr_auc": 0.25782907603748945,
+            "prevalence": 0.1440677966101695,
+            "recall_top20pct_samples": 0.17647058823529413
+          },
+          {
+            "n": 118,
+            "positives": 22,
+            "roc_auc": 0.7523674242424243,
+            "pr_auc": 0.4418267527907118,
+            "prevalence": 0.1864406779661017,
+            "recall_top20pct_samples": 0.3181818181818182
+          },
+          {
+            "n": 118,
+            "positives": 20,
+            "roc_auc": 0.6622448979591837,
+            "pr_auc": 0.3253374993364844,
+            "prevalence": 0.1694915254237288,
+            "recall_top20pct_samples": 0.35
+          }
+        ],
+        "summary": {
+          "folds_evaluated": 5,
+          "roc_auc": {
+            "mean": 0.6273,
+            "std": 0.0837,
+            "min": 0.5444,
+            "max": 0.7524
+          },
+          "pr_auc": {
+            "mean": 0.3198,
+            "std": 0.0872,
+            "min": 0.2181,
+            "max": 0.4418
+          },
+          "recall_top20pct_samples": {
+            "mean": 0.2828,
+            "std": 0.0655,
+            "min": 0.1765,
+            "max": 0.35
+          },
+          "prevalence": {
+            "mean": 0.1712,
+            "std": 0.0243,
+            "min": 0.1441,
+            "max": 0.2034
+          }
+        }
+      },
+      "random_stratified_cv_OPTIMISTIC": {
+        "summary": {
+          "folds_evaluated": 5,
+          "roc_auc": {
+            "mean": 0.6435,
+            "std": 0.0849,
+            "min": 0.5388,
+            "max": 0.7595
+          },
+          "pr_auc": {
+            "mean": 0.342,
+            "std": 0.1076,
+            "min": 0.1979,
+            "max": 0.4723
+          },
+          "recall_top20pct_samples": {
+            "mean": 0.3057,
+            "std": 0.1239,
+            "min": 0.1,
+            "max": 0.4286
+          },
+          "prevalence": {
+            "mean": 0.1712,
+            "std": 0.0038,
+            "min": 0.1695,
+            "max": 0.178
+          }
+        }
+      },
+      "standardised_coefficients_full_fit": {
+        "slope_deg_mean": -1.8934,
+        "slope_deg_max": 1.278,
+        "elevation_m_mean": 0.1461,
+        "relief_m": 0.3766
+      }
+    },
+    "b0_terrain_rules_same_folds": {
+      "features": [
+        "slope_deg_mean",
+        "relief_m",
+        "landcover_class"
+      ],
+      "note": "georakshak_ml B0 score without rainfall; untrained; evaluated on the same spatial test folds",
+      "spatial_block_cv": {
+        "folds": [
+          {
+            "n": 118,
+            "positives": 24,
+            "roc_auc": 0.5062056737588652,
+            "pr_auc": 0.19071499670568365,
+            "prevalence": 0.2033898305084746,
+            "recall_top20pct_samples": 0.041666666666666664
+          },
+          {
+            "n": 118,
+            "positives": 18,
+            "roc_auc": 0.45166666666666677,
+            "pr_auc": 0.14084715988360474,
+            "prevalence": 0.15254237288135594,
+            "recall_top20pct_samples": 0.1111111111111111
+          },
+          {
+            "n": 118,
+            "positives": 17,
+            "roc_auc": 0.5104834012813046,
+            "pr_auc": 0.15362095504530196,
+            "prevalence": 0.1440677966101695,
+            "recall_top20pct_samples": 0.23529411764705882
+          },
+          {
+            "n": 118,
+            "positives": 22,
+            "roc_auc": 0.3626893939393939,
+            "pr_auc": 0.14471008975493355,
+            "prevalence": 0.1864406779661017,
+            "recall_top20pct_samples": 0.09090909090909091
+          },
+          {
+            "n": 118,
+            "positives": 20,
+            "roc_auc": 0.45790816326530615,
+            "pr_auc": 0.15282659835354354,
+            "prevalence": 0.1694915254237288,
+            "recall_top20pct_samples": 0.1
+          }
+        ],
+        "summary": {
+          "folds_evaluated": 5,
+          "roc_auc": {
+            "mean": 0.4578,
+            "std": 0.0596,
+            "min": 0.3627,
+            "max": 0.5105
+          },
+          "pr_auc": {
+            "mean": 0.1565,
+            "std": 0.0199,
+            "min": 0.1408,
+            "max": 0.1907
+          },
+          "recall_top20pct_samples": {
+            "mean": 0.1158,
+            "std": 0.0719,
+            "min": 0.0417,
+            "max": 0.2353
+          },
+          "prevalence": {
+            "mean": 0.1712,
+            "std": 0.0243,
+            "min": 0.1441,
+            "max": 0.2034
+          }
+        }
+      }
+    },
+    "b1_logreg[terrain+landcover]": {
+      "features": [
+        "slope_deg_mean",
+        "slope_deg_max",
+        "elevation_m_mean",
+        "relief_m",
+        "landcover_tree_share"
+      ],
+      "spatial_block_cv": {
+        "folds": [
+          {
+            "n": 118,
+            "positives": 24,
+            "roc_auc": 0.7061170212765957,
+            "pr_auc": 0.45005698793169996,
+            "prevalence": 0.2033898305084746,
+            "recall_top20pct_samples": 0.375
+          },
+          {
+            "n": 118,
+            "positives": 18,
+            "roc_auc": 0.7377777777777778,
+            "pr_auc": 0.3416611348964119,
+            "prevalence": 0.15254237288135594,
+            "recall_top20pct_samples": 0.4444444444444444
+          },
+          {
+            "n": 118,
+            "positives": 17,
+            "roc_auc": 0.7792661619103087,
+            "pr_auc": 0.44083323687038956,
+            "prevalence": 0.1440677966101695,
+            "recall_top20pct_samples": 0.5882352941176471
+          },
+          {
+            "n": 118,
+            "positives": 22,
+            "roc_auc": 0.7765151515151516,
+            "pr_auc": 0.5509737810344009,
+            "prevalence": 0.1864406779661017,
+            "recall_top20pct_samples": 0.5909090909090909
+          },
+          {
+            "n": 118,
+            "positives": 20,
+            "roc_auc": 0.5790816326530613,
+            "pr_auc": 0.33316872622293764,
+            "prevalence": 0.1694915254237288,
+            "recall_top20pct_samples": 0.4
+          }
+        ],
+        "summary": {
+          "folds_evaluated": 5,
+          "roc_auc": {
+            "mean": 0.7158,
+            "std": 0.0821,
+            "min": 0.5791,
+            "max": 0.7793
+          },
+          "pr_auc": {
+            "mean": 0.4233,
+            "std": 0.0896,
+            "min": 0.3332,
+            "max": 0.551
+          },
+          "recall_top20pct_samples": {
+            "mean": 0.4797,
+            "std": 0.1033,
+            "min": 0.375,
+            "max": 0.5909
+          },
+          "prevalence": {
+            "mean": 0.1712,
+            "std": 0.0243,
+            "min": 0.1441,
+            "max": 0.2034
+          }
+        }
+      },
+      "random_stratified_cv_OPTIMISTIC": {
+        "summary": {
+          "folds_evaluated": 5,
+          "roc_auc": {
+            "mean": 0.7176,
+            "std": 0.0547,
+            "min": 0.6413,
+            "max": 0.7879
+          },
+          "pr_auc": {
+            "mean": 0.4443,
+            "std": 0.1041,
+            "min": 0.2922,
+            "max": 0.5826
+          },
+          "recall_top20pct_samples": {
+            "mean": 0.4343,
+            "std": 0.1209,
+            "min": 0.25,
+            "max": 0.5714
+          },
+          "prevalence": {
+            "mean": 0.1712,
+            "std": 0.0038,
+            "min": 0.1695,
+            "max": 0.178
+          }
+        }
+      },
+      "standardised_coefficients_full_fit": {
+        "slope_deg_mean": -1.0646,
+        "slope_deg_max": 1.5169,
+        "elevation_m_mean": -0.2309,
+        "relief_m": 0.0711,
+        "landcover_tree_share": -0.939
+      }
+    },
+    "b1_logreg[terrain+landcover+builtup]": {
+      "features": [
+        "slope_deg_mean",
+        "slope_deg_max",
+        "elevation_m_mean",
+        "relief_m",
+        "landcover_tree_share",
+        "landcover_builtup_share"
+      ],
+      "spatial_block_cv": {
+        "folds": [
+          {
+            "n": 118,
+            "positives": 24,
+            "roc_auc": 0.8754432624113475,
+            "pr_auc": 0.7944631689592054,
+            "prevalence": 0.2033898305084746,
+            "recall_top20pct_samples": 0.7083333333333334
+          },
+          {
+            "n": 118,
+            "positives": 18,
+            "roc_auc": 0.885,
+            "pr_auc": 0.7541009911568222,
+            "prevalence": 0.15254237288135594,
+            "recall_top20pct_samples": 0.6666666666666666
+          },
+          {
+            "n": 118,
+            "positives": 17,
+            "roc_auc": 0.8829353523587654,
+            "pr_auc": 0.7870400040157074,
+            "prevalence": 0.1440677966101695,
+            "recall_top20pct_samples": 0.7647058823529411
+          },
+          {
+            "n": 118,
+            "positives": 22,
+            "roc_auc": 0.918560606060606,
+            "pr_auc": 0.8919814651368048,
+            "prevalence": 0.1864406779661017,
+            "recall_top20pct_samples": 0.8181818181818182
+          },
+          {
+            "n": 118,
+            "positives": 20,
+            "roc_auc": 0.7086734693877551,
+            "pr_auc": 0.5864840424873227,
+            "prevalence": 0.1694915254237288,
+            "recall_top20pct_samples": 0.55
+          }
+        ],
+        "summary": {
+          "folds_evaluated": 5,
+          "roc_auc": {
+            "mean": 0.8541,
+            "std": 0.083,
+            "min": 0.7087,
+            "max": 0.9186
+          },
+          "pr_auc": {
+            "mean": 0.7628,
+            "std": 0.1112,
+            "min": 0.5865,
+            "max": 0.892
+          },
+          "recall_top20pct_samples": {
+            "mean": 0.7016,
+            "std": 0.1023,
+            "min": 0.55,
+            "max": 0.8182
+          },
+          "prevalence": {
+            "mean": 0.1712,
+            "std": 0.0243,
+            "min": 0.1441,
+            "max": 0.2034
+          }
+        }
+      },
+      "random_stratified_cv_OPTIMISTIC": {
+        "summary": {
+          "folds_evaluated": 5,
+          "roc_auc": {
+            "mean": 0.8537,
+            "std": 0.0587,
+            "min": 0.775,
+            "max": 0.9209
+          },
+          "pr_auc": {
+            "mean": 0.7463,
+            "std": 0.0732,
+            "min": 0.6553,
+            "max": 0.8384
+          },
+          "recall_top20pct_samples": {
+            "mean": 0.6938,
+            "std": 0.0849,
+            "min": 0.6,
+            "max": 0.8
+          },
+          "prevalence": {
+            "mean": 0.1712,
+            "std": 0.0038,
+            "min": 0.1695,
+            "max": 0.178
+          }
+        }
+      },
+      "standardised_coefficients_full_fit": {
+        "slope_deg_mean": -1.1993,
+        "slope_deg_max": 1.3002,
+        "elevation_m_mean": 0.0451,
+        "relief_m": 0.3186,
+        "landcover_tree_share": -0.0949,
+        "landcover_builtup_share": 2.7266
+      }
+    }
+  }
+}

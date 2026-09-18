@@ -1,0 +1,321 @@
+{
+  "generated_at": "2026-09-17T15:37:08+00:00",
+  "candidates": {
+    "aizawl": {
+      "name": "Aizawl, Mizoram",
+      "bbox": [
+        92.595,
+        23.605,
+        92.845,
+        23.855
+      ],
+      "nasa_glc_legacy_export_csv": {
+        "total": 16,
+        "by_location_accuracy": {
+          "1km": 6,
+          "5km": 8,
+          "50km": 1,
+          "25km": 1
+        },
+        "accuracy_le_5km": 14,
+        "by_year": {
+          "2009": 1,
+          "2010": 6,
+          "2013": 1,
+          "2014": 1,
+          "2015": 4,
+          "2016": 1,
+          "2017": 2
+        },
+        "by_category": {
+          "landslide": 16
+        },
+        "by_trigger": {
+          "rain": 3,
+          "tropical_cyclone": 1,
+          "downpour": 11,
+          "": 1
+        }
+      },
+      "nasa_coolr_reports_points": {
+        "total": 19,
+        "by_location_accuracy": {
+          "1km": 8,
+          "5km": 9,
+          "25km": 1,
+          "50km": 1
+        },
+        "accuracy_le_5km": 17,
+        "by_year": {
+          "2009": 1,
+          "2010": 6,
+          "2013": 1,
+          "2014": 1,
+          "2015": 4,
+          "2016": 1,
+          "2017": 3,
+          "2018": 1,
+          "2021": 1
+        },
+        "by_import_source": {
+          "GLC": 18,
+          "LRC": 1
+        },
+        "with_fatalities": 8
+      },
+      "osm": {
+        "osm_base_timestamp": "2026-09-17T15:30:36Z",
+        "highway_ways": 2876,
+        "place_city_town_village_hamlet_nodes": 13,
+        "schools_colleges": 5,
+        "hospitals_clinics_doctors": 23,
+        "highway_bridge_ways": 37,
+        "amenity_shelter": 0,
+        "emergency_assembly_point": 0
+      },
+      "copernicus_dem_tiles": [
+        {
+          "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N23_00_E092_00_DEM/Copernicus_DSM_COG_10_N23_00_E092_00_DEM.tif",
+          "http_status": 200,
+          "bytes": 49693712
+        }
+      ],
+      "worldcover_tiles": [
+        {
+          "url": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N21E090_Map.tif",
+          "http_status": 200,
+          "bytes": 58949208
+        }
+      ],
+      "terrain": {
+        "dem_pixels": [
+          900,
+          900
+        ],
+        "elevation_m_min": 52.5,
+        "elevation_m_max": 1476.2,
+        "slope_deg_median": 25.4,
+        "share_slope_gt_15deg": 0.809,
+        "share_slope_gt_25deg": 0.513,
+        "note": "Approximate: slope from geographic-grid gradient with local metre scaling (spike only)."
+      }
+    },
+    "kohima": {
+      "name": "Kohima, Nagaland",
+      "bbox": [
+        93.985,
+        25.545,
+        94.235,
+        25.795
+      ],
+      "nasa_glc_legacy_export_csv": {
+        "total": 26,
+        "by_location_accuracy": {
+          "50km": 2,
+          "1km": 6,
+          "25km": 5,
+          "10km": 6,
+          "5km": 7
+        },
+        "accuracy_le_5km": 13,
+        "by_year": {
+          "2007": 1,
+          "2008": 2,
+          "2010": 6,
+          "2011": 2,
+          "2013": 4,
+          "2015": 3,
+          "2016": 2,
+          "2017": 6
+        },
+        "by_category": {
+          "mudslide": 3,
+          "landslide": 22,
+          "complex": 1
+        },
+        "by_trigger": {
+          "rain": 5,
+          "continuous_rain": 8,
+          "downpour": 13
+        }
+      },
+      "nasa_coolr_reports_points": {
+        "total": 28,
+        "by_location_accuracy": {
+          "10km": 6,
+          "1km": 8,
+          "5km": 7,
+          "25km": 5,
+          "50km": 2
+        },
+        "accuracy_le_5km": 15,
+        "by_year": {
+          "2007": 1,
+          "2008": 2,
+          "2010": 6,
+          "2011": 2,
+          "2013": 4,
+          "2015": 3,
+          "2016": 2,
+          "2017": 7,
+          "2018": 1
+        },
+        "by_import_source": {
+          "GLC": 28
+        },
+        "with_fatalities": 0
+      },
+      "osm": {
+        "osm_base_timestamp": "2026-09-17T15:31:35Z",
+        "highway_ways": 1044,
+        "place_city_town_village_hamlet_nodes": 40,
+        "schools_colleges": 9,
+        "hospitals_clinics_doctors": 14,
+        "highway_bridge_ways": 32,
+        "amenity_shelter": 2,
+        "emergency_assembly_point": 0
+      },
+      "copernicus_dem_tiles": [
+        {
+          "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N25_00_E093_00_DEM/Copernicus_DSM_COG_10_N25_00_E093_00_DEM.tif",
+          "http_status": 200,
+          "bytes": 46431354
+        },
+        {
+          "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N25_00_E094_00_DEM/Copernicus_DSM_COG_10_N25_00_E094_00_DEM.tif",
+          "http_status": 200,
+          "bytes": 44258521
+        }
+      ],
+      "worldcover_tiles": [
+        {
+          "url": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N24E093_Map.tif",
+          "http_status": 200,
+          "bytes": 55435233
+        }
+      ],
+      "terrain": {
+        "dem_pixels": [
+          900,
+          900
+        ],
+        "elevation_m_min": 434.5,
+        "elevation_m_max": 3019.2,
+        "slope_deg_median": 21.8,
+        "share_slope_gt_15deg": 0.776,
+        "share_slope_gt_25deg": 0.373,
+        "note": "Approximate: slope from geographic-grid gradient with local metre scaling (spike only)."
+      }
+    },
+    "guwahati": {
+      "name": "Guwahati hills, Assam",
+      "bbox": [
+        91.615,
+        26.015,
+        91.865,
+        26.265
+      ],
+      "nasa_glc_legacy_export_csv": {
+        "total": 41,
+        "by_location_accuracy": {
+          "5km": 22,
+          "1km": 11,
+          "unknown": 1,
+          "exact": 3,
+          "50km": 1,
+          "10km": 2,
+          "25km": 1
+        },
+        "accuracy_le_5km": 36,
+        "by_year": {
+          "2007": 2,
+          "2010": 2,
+          "2011": 1,
+          "2012": 4,
+          "2013": 5,
+          "2014": 12,
+          "2015": 3,
+          "2016": 6,
+          "2017": 6
+        },
+        "by_category": {
+          "landslide": 39,
+          "rock_fall": 1,
+          "mudslide": 1
+        },
+        "by_trigger": {
+          "downpour": 12,
+          "continuous_rain": 7,
+          "rain": 17,
+          "unknown": 2,
+          "monsoon": 2,
+          "mining": 1
+        }
+      },
+      "nasa_coolr_reports_points": {
+        "total": 41,
+        "by_location_accuracy": {
+          "1km": 11,
+          "5km": 22,
+          "exact": 3,
+          "50km": 1,
+          "10km": 2,
+          "25km": 1,
+          "unknown": 1
+        },
+        "accuracy_le_5km": 36,
+        "by_year": {
+          "2007": 2,
+          "2010": 2,
+          "2011": 1,
+          "2012": 4,
+          "2013": 5,
+          "2014": 12,
+          "2015": 3,
+          "2016": 6,
+          "2017": 6
+        },
+        "by_import_source": {
+          "GLC": 41
+        },
+        "with_fatalities": 17
+      },
+      "osm": {
+        "osm_base_timestamp": "2026-09-17T15:32:35Z",
+        "highway_ways": 12585,
+        "place_city_town_village_hamlet_nodes": 5,
+        "schools_colleges": 111,
+        "hospitals_clinics_doctors": 299,
+        "highway_bridge_ways": 271,
+        "amenity_shelter": 0,
+        "emergency_assembly_point": 0
+      },
+      "copernicus_dem_tiles": [
+        {
+          "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N26_00_E091_00_DEM/Copernicus_DSM_COG_10_N26_00_E091_00_DEM.tif",
+          "http_status": 200,
+          "bytes": 45210399
+        }
+      ],
+      "worldcover_tiles": [
+        {
+          "url": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N24E090_Map.tif",
+          "http_status": 200,
+          "bytes": 98826043
+        }
+      ],
+      "terrain": {
+        "dem_pixels": [
+          900,
+          900
+        ],
+        "elevation_m_min": 39.2,
+        "elevation_m_max": 641.9,
+        "slope_deg_median": 5.7,
+        "share_slope_gt_15deg": 0.306,
+        "share_slope_gt_25deg": 0.091,
+        "note": "Approximate: slope from geographic-grid gradient with local metre scaling (spike only)."
+      }
+    }
+  }
+}

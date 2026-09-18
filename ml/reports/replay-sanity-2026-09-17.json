@@ -1,0 +1,1006 @@
+{
+  "generated_at": "2026-09-17T19:10:21+00:00",
+  "pilot_slug": "aizawl-mizoram",
+  "window": [
+    "2017-05-15",
+    "2017-06-30"
+  ],
+  "served_model": "b0-rules-0.1.0",
+  "candidate_model": [
+    "stage-a-rf-0.1.0-CANDIDATE-NOT-ADOPTED"
+  ],
+  "rain_feature_derivation": "rolling sums of rainfall_daily.csv with period_end <= as_of (backend convention)",
+  "events_in_window": [
+    {
+      "event_date": "2017-06-01",
+      "grid_code": "AIZ-0029-0024"
+    },
+    {
+      "event_date": "2017-06-10",
+      "grid_code": "AIZ-0028-0031"
+    }
+  ],
+  "days": [
+    {
+      "date": "2017-05-15",
+      "rain_1d_mm_max": 21.25,
+      "b0": {
+        "counts": {
+          "MODERATE": 1796,
+          "LOW": 1002
+        },
+        "max_score": 0.4146
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2072,
+          "LOW": 78,
+          "MODERATE": 648
+        },
+        "max_score": 0.5017
+      }
+    },
+    {
+      "date": "2017-05-16",
+      "rain_1d_mm_max": 26.29,
+      "b0": {
+        "counts": {
+          "MODERATE": 1803,
+          "LOW": 995
+        },
+        "max_score": 0.4202
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2077,
+          "LOW": 78,
+          "MODERATE": 643
+        },
+        "max_score": 0.5085
+      }
+    },
+    {
+      "date": "2017-05-17",
+      "rain_1d_mm_max": 0.11,
+      "b0": {
+        "counts": {
+          "MODERATE": 1795,
+          "LOW": 1003
+        },
+        "max_score": 0.4132
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2072,
+          "LOW": 78,
+          "MODERATE": 648
+        },
+        "max_score": 0.5
+      }
+    },
+    {
+      "date": "2017-05-18",
+      "rain_1d_mm_max": 0.25,
+      "b0": {
+        "counts": {
+          "MODERATE": 1795,
+          "LOW": 1003
+        },
+        "max_score": 0.4132
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2072,
+          "LOW": 78,
+          "MODERATE": 648
+        },
+        "max_score": 0.5
+      }
+    },
+    {
+      "date": "2017-05-19",
+      "rain_1d_mm_max": 2.55,
+      "b0": {
+        "counts": {
+          "MODERATE": 1795,
+          "LOW": 1003
+        },
+        "max_score": 0.4132
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2072,
+          "LOW": 78,
+          "MODERATE": 648
+        },
+        "max_score": 0.5
+      }
+    },
+    {
+      "date": "2017-05-20",
+      "rain_1d_mm_max": 20.83,
+      "b0": {
+        "counts": {
+          "MODERATE": 1795,
+          "LOW": 1003
+        },
+        "max_score": 0.4141
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2072,
+          "LOW": 78,
+          "MODERATE": 648
+        },
+        "max_score": 0.5011
+      }
+    },
+    {
+      "date": "2017-05-21",
+      "rain_1d_mm_max": 61.0,
+      "b0": {
+        "counts": {
+          "MODERATE": 2032,
+          "LOW": 758,
+          "HIGH": 8
+        },
+        "max_score": 0.4807
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2334,
+          "LOW": 53,
+          "MODERATE": 411
+        },
+        "max_score": 0.5817
+      }
+    },
+    {
+      "date": "2017-05-22",
+      "rain_1d_mm_max": 2.05,
+      "b0": {
+        "counts": {
+          "MODERATE": 1846,
+          "LOW": 952
+        },
+        "max_score": 0.4317
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2128,
+          "LOW": 75,
+          "MODERATE": 595
+        },
+        "max_score": 0.5224
+      }
+    },
+    {
+      "date": "2017-05-23",
+      "rain_1d_mm_max": 3.13,
+      "b0": {
+        "counts": {
+          "MODERATE": 1814,
+          "LOW": 984
+        },
+        "max_score": 0.421
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2085,
+          "LOW": 77,
+          "MODERATE": 636
+        },
+        "max_score": 0.5095
+      }
+    },
+    {
+      "date": "2017-05-24",
+      "rain_1d_mm_max": 0.29,
+      "b0": {
+        "counts": {
+          "MODERATE": 1795,
+          "LOW": 1003
+        },
+        "max_score": 0.4132
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2072,
+          "LOW": 78,
+          "MODERATE": 648
+        },
+        "max_score": 0.5
+      }
+    },
+    {
+      "date": "2017-05-25",
+      "rain_1d_mm_max": 0.0,
+      "b0": {
+        "counts": {
+          "MODERATE": 1795,
+          "LOW": 1003
+        },
+        "max_score": 0.4132
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2072,
+          "LOW": 78,
+          "MODERATE": 648
+        },
+        "max_score": 0.5
+      }
+    },
+    {
+      "date": "2017-05-26",
+      "rain_1d_mm_max": 0.96,
+      "b0": {
+        "counts": {
+          "MODERATE": 1795,
+          "LOW": 1003
+        },
+        "max_score": 0.4132
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2072,
+          "LOW": 78,
+          "MODERATE": 648
+        },
+        "max_score": 0.5
+      }
+    },
+    {
+      "date": "2017-05-27",
+      "rain_1d_mm_max": 0.0,
+      "b0": {
+        "counts": {
+          "MODERATE": 1795,
+          "LOW": 1003
+        },
+        "max_score": 0.4132
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2072,
+          "LOW": 78,
+          "MODERATE": 648
+        },
+        "max_score": 0.5
+      }
+    },
+    {
+      "date": "2017-05-28",
+      "rain_1d_mm_max": 7.77,
+      "b0": {
+        "counts": {
+          "MODERATE": 1795,
+          "LOW": 1003
+        },
+        "max_score": 0.4132
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2072,
+          "LOW": 78,
+          "MODERATE": 648
+        },
+        "max_score": 0.5
+      }
+    },
+    {
+      "date": "2017-05-29",
+      "rain_1d_mm_max": 15.96,
+      "b0": {
+        "counts": {
+          "MODERATE": 1796,
+          "LOW": 1002
+        },
+        "max_score": 0.4147
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2072,
+          "LOW": 78,
+          "MODERATE": 648
+        },
+        "max_score": 0.5019
+      }
+    },
+    {
+      "date": "2017-05-30",
+      "rain_1d_mm_max": 4.19,
+      "b0": {
+        "counts": {
+          "MODERATE": 1795,
+          "LOW": 1003
+        },
+        "max_score": 0.4132
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2072,
+          "LOW": 78,
+          "MODERATE": 648
+        },
+        "max_score": 0.5
+      }
+    },
+    {
+      "date": "2017-05-31",
+      "rain_1d_mm_max": 64.05,
+      "b0": {
+        "counts": {
+          "MODERATE": 2014,
+          "LOW": 784
+        },
+        "max_score": 0.4361
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2291,
+          "MODERATE": 452,
+          "LOW": 55
+        },
+        "max_score": 0.5788
+      }
+    },
+    {
+      "date": "2017-06-01",
+      "rain_1d_mm_max": 9.37,
+      "b0": {
+        "counts": {
+          "MODERATE": 1826,
+          "LOW": 972
+        },
+        "max_score": 0.4135
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2098,
+          "LOW": 76,
+          "MODERATE": 624
+        },
+        "max_score": 0.5157
+      },
+      "event_cells": [
+        {
+          "grid_code": "AIZ-0029-0024",
+          "b0_score": 0.3835,
+          "b0_severity": "MODERATE",
+          "b0_percentile_in_pilot": 0.992,
+          "candidate_score": 0.5058,
+          "candidate_severity": "HIGH",
+          "candidate_percentile_in_pilot": 0.946
+        }
+      ]
+    },
+    {
+      "date": "2017-06-02",
+      "rain_1d_mm_max": 42.01,
+      "b0": {
+        "counts": {
+          "MODERATE": 2079,
+          "LOW": 719
+        },
+        "max_score": 0.4459
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2342,
+          "MODERATE": 406,
+          "LOW": 50
+        },
+        "max_score": 0.5819
+      }
+    },
+    {
+      "date": "2017-06-03",
+      "rain_1d_mm_max": 24.9,
+      "b0": {
+        "counts": {
+          "MODERATE": 1981,
+          "LOW": 817
+        },
+        "max_score": 0.4405
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2263,
+          "LOW": 64,
+          "MODERATE": 471
+        },
+        "max_score": 0.5479
+      }
+    },
+    {
+      "date": "2017-06-04",
+      "rain_1d_mm_max": 52.6,
+      "b0": {
+        "counts": {
+          "MODERATE": 2190,
+          "LOW": 549,
+          "HIGH": 59
+        },
+        "max_score": 0.5071
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2493,
+          "MODERATE": 269,
+          "LOW": 36
+        },
+        "max_score": 0.6239
+      }
+    },
+    {
+      "date": "2017-06-05",
+      "rain_1d_mm_max": 9.5,
+      "b0": {
+        "counts": {
+          "MODERATE": 2005,
+          "LOW": 793
+        },
+        "max_score": 0.4489
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2295,
+          "LOW": 60,
+          "MODERATE": 443
+        },
+        "max_score": 0.5546
+      }
+    },
+    {
+      "date": "2017-06-06",
+      "rain_1d_mm_max": 0.0,
+      "b0": {
+        "counts": {
+          "MODERATE": 1954,
+          "LOW": 844
+        },
+        "max_score": 0.4359
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2221,
+          "LOW": 69,
+          "MODERATE": 508
+        },
+        "max_score": 0.5391
+      }
+    },
+    {
+      "date": "2017-06-07",
+      "rain_1d_mm_max": 0.0,
+      "b0": {
+        "counts": {
+          "MODERATE": 1880,
+          "LOW": 918
+        },
+        "max_score": 0.424
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2151,
+          "LOW": 74,
+          "MODERATE": 573
+        },
+        "max_score": 0.5208
+      }
+    },
+    {
+      "date": "2017-06-08",
+      "rain_1d_mm_max": 25.94,
+      "b0": {
+        "counts": {
+          "MODERATE": 1908,
+          "LOW": 890
+        },
+        "max_score": 0.4255
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2178,
+          "LOW": 71,
+          "MODERATE": 549
+        },
+        "max_score": 0.5355
+      }
+    },
+    {
+      "date": "2017-06-09",
+      "rain_1d_mm_max": 13.23,
+      "b0": {
+        "counts": {
+          "MODERATE": 1885,
+          "LOW": 913
+        },
+        "max_score": 0.421
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2151,
+          "LOW": 73,
+          "MODERATE": 574
+        },
+        "max_score": 0.5246
+      }
+    },
+    {
+      "date": "2017-06-10",
+      "rain_1d_mm_max": 42.7,
+      "b0": {
+        "counts": {
+          "MODERATE": 2036,
+          "LOW": 761,
+          "HIGH": 1
+        },
+        "max_score": 0.4594
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2328,
+          "MODERATE": 418,
+          "LOW": 52
+        },
+        "max_score": 0.5629
+      },
+      "event_cells": [
+        {
+          "grid_code": "AIZ-0028-0031",
+          "b0_score": 0.3539,
+          "b0_severity": "MODERATE",
+          "b0_percentile_in_pilot": 0.787,
+          "candidate_score": 0.5531,
+          "candidate_severity": "HIGH",
+          "candidate_percentile_in_pilot": 0.88
+        }
+      ]
+    },
+    {
+      "date": "2017-06-11",
+      "rain_1d_mm_max": 49.33,
+      "b0": {
+        "counts": {
+          "MODERATE": 2127,
+          "LOW": 658,
+          "HIGH": 13
+        },
+        "max_score": 0.4944
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2402,
+          "MODERATE": 351,
+          "LOW": 45
+        },
+        "max_score": 0.5983
+      }
+    },
+    {
+      "date": "2017-06-12",
+      "rain_1d_mm_max": 13.06,
+      "b0": {
+        "counts": {
+          "MODERATE": 2041,
+          "LOW": 756,
+          "HIGH": 1
+        },
+        "max_score": 0.4645
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2336,
+          "LOW": 53,
+          "MODERATE": 409
+        },
+        "max_score": 0.5621
+      }
+    },
+    {
+      "date": "2017-06-13",
+      "rain_1d_mm_max": 191.5,
+      "b0": {
+        "counts": {
+          "HIGH": 1650,
+          "MODERATE": 911,
+          "LOW": 200,
+          "VERY_HIGH": 37
+        },
+        "max_score": 0.7141
+      },
+      "candidate": {
+        "counts": {
+          "VERY_HIGH": 2467,
+          "MODERATE": 70,
+          "HIGH": 243,
+          "LOW": 18
+        },
+        "max_score": 0.9008
+      }
+    },
+    {
+      "date": "2017-06-14",
+      "rain_1d_mm_max": 10.93,
+      "b0": {
+        "counts": {
+          "HIGH": 390,
+          "MODERATE": 1991,
+          "LOW": 417
+        },
+        "max_score": 0.5478
+      },
+      "candidate": {
+        "counts": {
+          "VERY_HIGH": 1887,
+          "MODERATE": 177,
+          "HIGH": 707,
+          "LOW": 27
+        },
+        "max_score": 0.7143
+      }
+    },
+    {
+      "date": "2017-06-15",
+      "rain_1d_mm_max": 0.5,
+      "b0": {
+        "counts": {
+          "HIGH": 251,
+          "MODERATE": 2097,
+          "LOW": 450
+        },
+        "max_score": 0.5367
+      },
+      "candidate": {
+        "counts": {
+          "VERY_HIGH": 1602,
+          "MODERATE": 194,
+          "HIGH": 970,
+          "LOW": 32
+        },
+        "max_score": 0.6891
+      }
+    },
+    {
+      "date": "2017-06-16",
+      "rain_1d_mm_max": 30.37,
+      "b0": {
+        "counts": {
+          "MODERATE": 2184,
+          "LOW": 574,
+          "HIGH": 40
+        },
+        "max_score": 0.5042
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2471,
+          "MODERATE": 291,
+          "LOW": 36
+        },
+        "max_score": 0.6164
+      }
+    },
+    {
+      "date": "2017-06-17",
+      "rain_1d_mm_max": 43.41,
+      "b0": {
+        "counts": {
+          "MODERATE": 2177,
+          "LOW": 573,
+          "HIGH": 48
+        },
+        "max_score": 0.4862
+      },
+      "candidate": {
+        "counts": {
+          "VERY_HIGH": 25,
+          "HIGH": 2451,
+          "MODERATE": 284,
+          "LOW": 38
+        },
+        "max_score": 0.6542
+      }
+    },
+    {
+      "date": "2017-06-18",
+      "rain_1d_mm_max": 21.1,
+      "b0": {
+        "counts": {
+          "MODERATE": 2176,
+          "LOW": 590,
+          "HIGH": 32
+        },
+        "max_score": 0.4805
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2461,
+          "MODERATE": 299,
+          "LOW": 38
+        },
+        "max_score": 0.6331
+      }
+    },
+    {
+      "date": "2017-06-19",
+      "rain_1d_mm_max": 21.19,
+      "b0": {
+        "counts": {
+          "MODERATE": 2165,
+          "LOW": 611,
+          "HIGH": 22
+        },
+        "max_score": 0.4743
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2439,
+          "MODERATE": 317,
+          "LOW": 42
+        },
+        "max_score": 0.6197
+      }
+    },
+    {
+      "date": "2017-06-20",
+      "rain_1d_mm_max": 6.14,
+      "b0": {
+        "counts": {
+          "MODERATE": 2008,
+          "LOW": 790
+        },
+        "max_score": 0.4472
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2298,
+          "LOW": 58,
+          "MODERATE": 442
+        },
+        "max_score": 0.5595
+      }
+    },
+    {
+      "date": "2017-06-21",
+      "rain_1d_mm_max": 19.75,
+      "b0": {
+        "counts": {
+          "MODERATE": 2030,
+          "LOW": 767,
+          "HIGH": 1
+        },
+        "max_score": 0.4506
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2320,
+          "LOW": 55,
+          "MODERATE": 423
+        },
+        "max_score": 0.5645
+      }
+    },
+    {
+      "date": "2017-06-22",
+      "rain_1d_mm_max": 19.55,
+      "b0": {
+        "counts": {
+          "MODERATE": 2064,
+          "LOW": 733,
+          "HIGH": 1
+        },
+        "max_score": 0.4573
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2339,
+          "MODERATE": 407,
+          "LOW": 52
+        },
+        "max_score": 0.5722
+      }
+    },
+    {
+      "date": "2017-06-23",
+      "rain_1d_mm_max": 21.21,
+      "b0": {
+        "counts": {
+          "MODERATE": 2052,
+          "LOW": 745,
+          "HIGH": 1
+        },
+        "max_score": 0.4628
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2338,
+          "MODERATE": 410,
+          "LOW": 50
+        },
+        "max_score": 0.5658
+      }
+    },
+    {
+      "date": "2017-06-24",
+      "rain_1d_mm_max": 29.26,
+      "b0": {
+        "counts": {
+          "MODERATE": 2099,
+          "LOW": 697,
+          "HIGH": 2
+        },
+        "max_score": 0.4637
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2371,
+          "MODERATE": 379,
+          "LOW": 48
+        },
+        "max_score": 0.5839
+      }
+    },
+    {
+      "date": "2017-06-25",
+      "rain_1d_mm_max": 35.83,
+      "b0": {
+        "counts": {
+          "MODERATE": 2119,
+          "LOW": 667,
+          "HIGH": 12
+        },
+        "max_score": 0.4918
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2396,
+          "MODERATE": 357,
+          "LOW": 45
+        },
+        "max_score": 0.5952
+      }
+    },
+    {
+      "date": "2017-06-26",
+      "rain_1d_mm_max": 20.6,
+      "b0": {
+        "counts": {
+          "MODERATE": 2068,
+          "LOW": 726,
+          "HIGH": 4
+        },
+        "max_score": 0.4697
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2349,
+          "MODERATE": 401,
+          "LOW": 48
+        },
+        "max_score": 0.5684
+      }
+    },
+    {
+      "date": "2017-06-27",
+      "rain_1d_mm_max": 19.42,
+      "b0": {
+        "counts": {
+          "MODERATE": 2046,
+          "LOW": 746,
+          "HIGH": 6
+        },
+        "max_score": 0.4744
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2342,
+          "LOW": 52,
+          "MODERATE": 404
+        },
+        "max_score": 0.5741
+      }
+    },
+    {
+      "date": "2017-06-28",
+      "rain_1d_mm_max": 7.67,
+      "b0": {
+        "counts": {
+          "MODERATE": 1912,
+          "LOW": 886
+        },
+        "max_score": 0.4362
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2178,
+          "LOW": 71,
+          "MODERATE": 549
+        },
+        "max_score": 0.5279
+      }
+    },
+    {
+      "date": "2017-06-29",
+      "rain_1d_mm_max": 16.2,
+      "b0": {
+        "counts": {
+          "MODERATE": 1915,
+          "LOW": 883
+        },
+        "max_score": 0.4371
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2185,
+          "LOW": 70,
+          "MODERATE": 543
+        },
+        "max_score": 0.529
+      }
+    },
+    {
+      "date": "2017-06-30",
+      "rain_1d_mm_max": 3.07,
+      "b0": {
+        "counts": {
+          "MODERATE": 1904,
+          "LOW": 894
+        },
+        "max_score": 0.4337
+      },
+      "candidate": {
+        "counts": {
+          "HIGH": 2171,
+          "LOW": 71,
+          "MODERATE": 556
+        },
+        "max_score": 0.5248
+      }
+    }
+  ],
+  "note": "Diagnostic only. Two events cannot validate event prediction; no event-prediction claim is made.",
+  "baseline_day": {
+    "date": "2017-05-15",
+    "rain_1d_mm_max": 21.25,
+    "b0": {
+      "counts": {
+        "MODERATE": 1796,
+        "LOW": 1002
+      },
+      "max_score": 0.4146
+    },
+    "candidate": {
+      "counts": {
+        "HIGH": 2072,
+        "LOW": 78,
+        "MODERATE": 648
+      },
+      "max_score": 0.5017
+    }
+  },
+  "peak_rain_day": {
+    "date": "2017-06-13",
+    "rain_1d_mm_max": 191.5,
+    "b0": {
+      "counts": {
+        "HIGH": 1650,
+        "MODERATE": 911,
+        "LOW": 200,
+        "VERY_HIGH": 37
+      },
+      "max_score": 0.7141
+    },
+    "candidate": {
+      "counts": {
+        "VERY_HIGH": 2467,
+        "MODERATE": 70,
+        "HIGH": 243,
+        "LOW": 18
+      },
+      "max_score": 0.9008
+    }
+  }
+}
