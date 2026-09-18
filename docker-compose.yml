@@ -1,0 +1,30 @@
+# Cloud/dev parity stack (docs/development.md). Not used on machines without Docker.
+services:
+  db:
+    image: postgis/postgis:17-3.5
+    environment:
+      POSTGRES_DB: georakshak
+      POSTGRES_USER: georakshak
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    ports: ["5432:5432"]
+    volumes: [dbdata:/var/lib/postgresql/data]
+  backend:
+    build: { context: ., dockerfile: backend/Dockerfile }
+    environment:
+      DATABASE_URL: postgresql://georakshak:${POSTGRES_PASSWORD:-change-me}@db:5432/georakshak
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:?set DEMO_USER_PASSWORD}
+      RUN_MODE: ${RUN_MODE:-DEMO_REPLAY}
+      MEDIA_DIR: /data/media
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      MONITOR_INTERVAL_S: ${MONITOR_INTERVAL_S:-900}
+      WEATHER_PROVIDER: ${WEATHER_PROVIDER:-none}
+      WEATHER_MIN_INTERVAL_S: ${WEATHER_MIN_INTERVAL_S:-3600}
+      ASSESSMENT_RETENTION_DAYS: ${ASSESSMENT_RETENTION_DAYS:-7}
+    ports: ["8000:8000"]
+    volumes: [media:/data/media, ./ml/data/processed:/srv/ml/data/processed:ro]
+    depends_on: [db]
+volumes:
+  dbdata:
+  media:
