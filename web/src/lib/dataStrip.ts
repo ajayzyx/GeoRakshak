@@ -173,17 +173,22 @@ function rainfallEntry(sources: DataSource[] | null, mode: SystemMode | null): S
   const connectedLive = liveSources.filter((s) => effectiveLabelOf(s, mode) === "REAL_LIVE");
   if (connectedLive.length) return tagged("rainfall", label, "REAL_LIVE", names(connectedLive), { note: joinNotes(apiNote, licenceNote), slug: connectedLive[0].slug });
   const stored = historical.filter((s) => ["REAL_HISTORICAL", "REAL_REPLAY", "REAL_LIVE"].includes(effectiveLabelOf(s, mode)));
-  if (provider === "none" || provider === null) {
-    if (stored.length) {
-      return tagged("rainfall", label, "REAL_HISTORICAL", `No weather provider connected — stored history only (${stored.map((s) => s.slug).join(", ")})`, { note: joinNotes(apiNote, licenceNote), slug: stored[0].slug });
-    }
-    return tagged("rainfall", label, "NOT_CONNECTED", "No weather provider connected and no stored rainfall history", { note: joinNotes(apiNote, licenceNote) });
+  if (stored.length) {
+    // Either no provider is configured, or a configured one did not refresh this cycle (its error shows in the
+    // monitoring panel). Either way the risk came from stored rainfall, so name that. Never fall back to an
+    // AWAITING_ACCESS adapter here: showing "IMD: AWAITING_ACCESS" implies IMD supplied this rainfall.
+    const best = stored.find((s) => effectiveLabelOf(s, mode) === "REAL_LIVE") ?? stored[0];
+    const prefix = provider && provider !== "none"
+      ? `No fresh fetch from ${provider} — stored rainfall only`
+      : "No weather provider connected — stored history only";
+    return tagged("rainfall", label, effectiveLabelOf(best, mode), `${prefix} (${stored.map((s) => s.slug).join(", ")})`, {
+      note: joinNotes(best.status_note, apiNote, licenceNote),
+      slug: best.slug,
+    });
   }
-  const first = liveSources[0];
-  return tagged("rainfall", label, first ? effectiveLabelOf(first, mode) : "NOT_CONNECTED", liveSources.length ? liveSources.map((s) => `${sourceName(s)}: ${effectiveLabelOf(s, mode)}`).join("; ") : "No live rainfall source reported", {
-    note: joinNotes(apiNote, licenceNote),
-    slug: first?.slug,
-  });
+  return tagged("rainfall", label, "NOT_CONNECTED", provider && provider !== "none"
+    ? `No rainfall ingested from ${provider} yet`
+    : "No weather provider connected and no stored rainfall history", { note: joinNotes(apiNote, licenceNote) });
 }
 
 function forecastEntry(sources: DataSource[] | null, meta: CollectionMetadata | undefined, leadTime: LeadTime, mode: SystemMode | null): StripEntry {
@@ -191,7 +196,16 @@ function forecastEntry(sources: DataSource[] | null, meta: CollectionMetadata | 
   const fromMeta = leadTime > 0 ? meta?.forecast_source : null;
   const registry = (sources ?? []).filter((s) => s.kind === "WEATHER_FORECAST");
   const fromMonitor = mode?.monitor?.weather?.forecast_source ?? null;
-  const record = fromMeta ? registry.find((s) => s.slug === fromMeta.slug) : (fromMonitor ? registry.find((s) => s.slug === fromMonitor) : undefined) ?? registry[0];
+  // Viewing current risk gives no forecast_source, so fall back to the source actually in use rather than
+  // whichever row happens to sort first: a connected provider, else the replay stand-in, else an honest
+  // "not connected". Picking registry[0] showed "Open-Meteo NOT_CONNECTED" while the replay was producing
+  // the forecast layer.
+  const inUse = () =>
+    (fromMonitor ? registry.find((s) => s.slug === fromMonitor) : undefined) ??
+    registry.find((s) => effectiveLabelOf(s, mode) === "REAL_LIVE") ??
+    registry.find((s) => effectiveLabelOf(s, mode) === "SIMULATED") ??
+    registry[0];
+  const record = fromMeta ? registry.find((s) => s.slug === fromMeta.slug) : inUse();
   const skill = meta?.forecast_skill_evaluated ? "" : " · skill not evaluated";
   if (!fromMeta && !record) return { key: "forecast", label, tag: "NONE", tone: "not-connected", text: "No forecast source reported" };
   const name = fromMeta?.label ?? (record ? sourceName(record) : "forecast");

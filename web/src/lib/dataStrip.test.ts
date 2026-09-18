@@ -91,6 +91,52 @@ const LIVE_SOURCES: DataSource[] = [
 const byKey = (entries: StripEntry[]) => Object.fromEntries(entries.map((e) => [e.key, e])) as Record<StripEntry["key"], StripEntry>;
 
 describe("buildDataStrip", () => {
+  // Regression: a configured provider whose fetch did not refresh must not make the rainfall row name the
+  // IMD adapter (AWAITING_ACCESS) — that implies IMD supplied the rainfall that the risk was computed from.
+  it("names stored rainfall, never the awaiting-access IMD adapter, when a live fetch does not refresh", () => {
+    const liveSources = [
+      ...SOURCES,
+      { slug: "open-meteo-recent", kind: "WEATHER_HISTORICAL", provider: "Open-Meteo (non-IMD model forecast)",
+        connection_status: "CONNECTED_LIVE", provenance_default: "REAL_LIVE",
+        status_note: "Model-derived recent precipitation, NOT gauge observations and NOT IMD." },
+    ] as typeof SOURCES;
+    const noFreshFetch: SystemMode = {
+      run_mode: "LIVE", replay: null,
+      monitor: { ...MONITOR_OK, weather: null, weather_error: "Open-Meteo request failed: DNS" },
+    };
+    const e = byKey(buildDataStrip({ sources: liveSources, mode: noFreshFetch, model: BASELINE, riskMeta: undefined, leadTime: 0 }));
+    expect(e.rainfall.tag).toBe("REAL_LIVE");
+    expect(e.rainfall.text).toContain("open-meteo-recent");
+    expect(e.rainfall.text).not.toContain("AWAITING_ACCESS");
+    expect(e.rainfall.text.toLowerCase()).toContain("no fresh fetch");
+  });
+
+  // Regression: on the Current view there is no forecast_source, and picking the first registry row showed
+  // "Open-Meteo NOT_CONNECTED" while the replay was actually producing the forecast layer.
+  it("names the forecast source in use when no lead time is selected", () => {
+    const withUnconnectedFallback = [
+      ...SOURCES,
+      { slug: "open-meteo-forecast", kind: "WEATHER_FORECAST", provider: "Open-Meteo (non-IMD model forecast)",
+        connection_status: "NOT_CONNECTED", provenance_default: "REAL_LIVE" },
+    ] as typeof SOURCES;
+    const replay = byKey(buildDataStrip({ sources: withUnconnectedFallback, mode: REPLAY_MODE, model: BASELINE, riskMeta: undefined, leadTime: 0 }));
+    expect(replay.forecast.tag).toBe("SIMULATED");
+    expect(replay.forecast.text.toLowerCase()).toContain("replay");
+    expect(replay.forecast.text).not.toContain("Open-Meteo");
+
+    const live = [
+      ...SOURCES.filter((s) => s.slug !== "replay-forecast"),
+      { slug: "open-meteo-forecast", kind: "WEATHER_FORECAST", provider: "Open-Meteo (non-IMD model forecast)",
+        connection_status: "CONNECTED_LIVE", provenance_default: "REAL_LIVE" },
+    ] as typeof SOURCES;
+    const liveStrip = byKey(buildDataStrip({
+      sources: live, mode: { run_mode: "LIVE", replay: null, monitor: MONITOR_OK }, model: BASELINE,
+      riskMeta: undefined, leadTime: 0,
+    }));
+    expect(liveStrip.forecast.tag).toBe("REAL_LIVE");
+    expect(liveStrip.forecast.text).toContain("non-IMD");
+  });
+
   const entries = byKey(buildDataStrip({ sources: SOURCES, mode: REPLAY_MODE, model: BASELINE, riskMeta: RISK_META, leadTime: 48 }));
 
   it("marks terrain, landslides, roads, facilities and satellite layers as real historical with their source names", () => {
