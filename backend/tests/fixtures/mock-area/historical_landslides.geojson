@@ -1,0 +1,1 @@
+{"type": "FeatureCollection", "features": [{"type": "Feature", "geometry": {"type": "Point", "coordinates": [0.020249999999999997, 0.015749999999999997]}, "properties": {"event_date": null, "event_date_precision": "UNKNOWN", "source_slug": "mock-pilot", "source_record_id": "MOCK-1"}}]}

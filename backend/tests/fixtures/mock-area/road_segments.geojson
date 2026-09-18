@@ -1,0 +1,1 @@
+{"type": "FeatureCollection", "features": [{"type": "Feature", "geometry": {"type": "LineString", "coordinates": [[0.0005, 0.013499999999999998], [0.026499999999999996, 0.013499999999999998]]}, "properties": {"osm_way_id": null, "name": "Mock Road", "road_class": "secondary", "source_slug": "mock-pilot"}}]}

@@ -1,0 +1,42 @@
+{
+  "pilot_slug": "mock-area",
+  "name": "Mock Area \u2014 not a real location",
+  "status": "MOCK",
+  "bbox": [
+    0.0,
+    0.0,
+    0.026999999999999996,
+    0.026999999999999996
+  ],
+  "cell_size_m": 500,
+  "projected_crs": "EPSG:32631",
+  "feature_version": "mock-0",
+  "generated_at": "2000-01-01T00:00:00Z",
+  "boundary_note": "Synthetic test area in open ocean. Not a real place.",
+  "sources": [
+    {
+      "slug": "mock-pilot",
+      "kind": "TERRAIN",
+      "provider": "GeoRakshak test fixture",
+      "dataset": "Synthetic mock pilot",
+      "connection_status": "SIMULATED",
+      "verification_status": "UNVERIFIED",
+      "licence": "n/a",
+      "attribution_text": "Synthetic test data",
+      "provenance_default": "SIMULATED_DEMO",
+      "status_note": "Test fixture only"
+    },
+    {
+      "slug": "mock-rainfall",
+      "kind": "WEATHER_HISTORICAL",
+      "provider": "GeoRakshak test fixture",
+      "dataset": "Synthetic rainfall series",
+      "connection_status": "SIMULATED",
+      "verification_status": "UNVERIFIED",
+      "licence": "n/a",
+      "attribution_text": "Synthetic test data",
+      "provenance_default": "SIMULATED_DEMO",
+      "status_note": "Test fixture only"
+    }
+  ]
+}

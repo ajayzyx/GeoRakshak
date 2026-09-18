@@ -1,0 +1,1 @@
+{"type": "FeatureCollection", "features": [{"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [[[0.0, 0.0], [0.026999999999999996, 0.0], [0.026999999999999996, 0.026999999999999996], [0.0, 0.026999999999999996], [0.0, 0.0]]]}, "properties": {"name": "Mock Area \u2014 not a real location"}}]}
