@@ -1,281 +1,440 @@
 # Database Design (Conceptual) — GeoRakshak
 
-> **Status:** CONCEPTUAL. No database, migration or DDL exists yet.
-> Target: PostgreSQL + PostGIS (proposed, see [architecture.md](architecture.md)). Owner: Backend Developer.
+> **Status:** CONCEPTUAL, **APPROVED MVP scope**, matching the frozen API contract v1 (aligned with official SIH26001 OR-01 to OR-21). No database, migration or DDL exists yet.
+> Target: PostgreSQL + PostGIS inside the approved single-backend architecture ([architecture.md](architecture.md)). Owner: Backend Developer.
+> Scope tags: **[MVP]** built for the prototype · **[EXTENSION]** post-MVP.
 
 ## 1. Conventions
 
 | Convention | Rule |
 |---|---|
-| Primary keys | `id UUID` |
-| Timestamps | `created_at`, `updated_at` as `timestamptz` (UTC) |
+| Primary keys | `id UUID` (high-volume time series may use `bigint` identity) |
+| Timestamps | `timestamptz`, stored in UTC. `created_at` / `updated_at` on mutable tables. |
 | Geometry SRID | **EPSG:4326** for all stored geometry. Projected CRSs used only in computation. |
-| Geometry types | Explicit type per column (for example `geometry(Point, 4326)`) |
+| Geometry types | Explicit type per column, for example `geometry(Point, 4326)` |
 | Spatial indexes | GiST index on every geometry column |
-| Provenance | `provenance` enum on every environmental / risk / event table: `REAL_LIVE`, `REAL_HISTORICAL`, `SIMULATED_DEMO`, `MODEL_OUTPUT` |
-| Soft delete | `deleted_at` on user-generated content (reports, evidence). Hard delete only by admin process. |
+| Provenance | `provenance` on every environmental, risk, event and report row: `REAL_LIVE`, `REAL_HISTORICAL`, `SIMULATED_DEMO`, `MODEL_OUTPUT` |
+| Connection status | On `data_sources`: `CONNECTED_LIVE`, `CONNECTED_HISTORICAL`, `SIMULATED`, `SANDBOX`, `AWAITING_ACCESS`, `NOT_CONNECTED` |
+| Soft delete | `deleted_at` on user-generated content (reports, evidence) |
 | Naming | `snake_case`, plural table names |
 | Enums | Postgres enums or check constraints (decided at implementation) |
 
-## 2. Entity-relationship overview
+## 2. Entity overview
+
+| Table | Scope | Official reqs |
+|---|---|---|
+| `users` | [MVP] | OR-10, OR-15, OR-20 |
+| `user_devices` | [MVP] (FCM push tokens, H8) | OR-20 |
+| `admin_boundaries` | [MVP] | OR-08 |
+| `data_sources` | [MVP] | OR-17, OR-18, OR-19, OR-20 (status registry) |
+| `model_versions` | [MVP] | OR-06 |
+| `risk_zones` | [MVP] | OR-06, OR-08, OR-11 |
+| `rainfall_observations` | [MVP] | OR-01 |
+| `rainfall_forecasts` | [MVP] | OR-13 |
+| `sensor_stations` | [MVP] | OR-02, OR-19 |
+| `sensor_readings` | [MVP] | OR-02, OR-19 |
+| `historical_landslides` | [MVP] | OR-05 |
+| `risk_assessments` | [MVP] | OR-06, OR-11, OR-13 |
+| `locations` | [MVP] | OR-09 |
+| `road_segments` | [MVP] | OR-09, OR-12 |
+| `reports` | [MVP] | OR-10, OR-16 |
+| `evidence` | [MVP] | OR-10 |
+| `alerts` | [MVP] | OR-07, OR-15, OR-20 |
+| `notification_deliveries` | [MVP] | OR-15, OR-20 |
+| `audit_events` | [MVP] (minimal) | Accountability |
+| `organizations`, `incidents`, `alert_templates`, `response_priority_snapshots`, `data_ingestion_runs`, `road_graph_*`, `sms_opt_outs` | [EXTENSION] | See §5 |
+
+## 3. Relationships
 
 ```
-organizations 1───* users
-users 1───* field_reports (reporter)
-users 1───* alerts (approved_by)
-users *───* alerts  via alert_recipients (acknowledgement)
+admin_boundaries (parent_id → self: state → district → block)
+  ├─1:*─ users (jurisdiction or registered area)
+  ├─1:*─ risk_zones
+  ├─1:*─ locations
+  └─1:*─ alerts
 
-admin_boundaries (self-referencing parent: state → district → sub-district/block)
-admin_boundaries 1───* locations
-admin_boundaries 1───* risk_zones
+data_sources ─1:*─ rainfall_observations | rainfall_forecasts | sensor_stations | historical_landslides | locations | road_segments
+sensor_stations ─1:*─ sensor_readings
 
-data_sources 1───* environmental_observations
-data_sources 1───* historical_landslides
-data_sources 1───* data_ingestion_runs
+risk_zones ─1:*─ rainfall_observations
+risk_zones ─1:*─ rainfall_forecasts
+risk_zones ─1:*─ risk_assessments ─*:1─ model_versions
+risk_zones ─*:*─ road_segments       (spatial, computed; no join table in MVP)
+risk_zones ─*:*─ locations           (spatial, computed)
+sensor_stations ─*:*─ risk_zones     (within influence radius, computed)
 
-risk_zones (grid cells / polygons)
-risk_zones 1───* environmental_observations   (aggregated to cell)
-risk_zones 1───* risk_assessments             (time series of scores)
-model_versions 1───* risk_assessments
-risk_assessments 1───* risk_factors           (explanations)
+users ─1:*─ reports ─1:*─ evidence
+reports ─*:1─ risk_zones, road_segments (nearest), alerts (optional)
+road_segments.status_report_id ─*:1─ reports
 
-risk_zones 1───* alerts
-risk_assessments 1───* alerts (triggering assessment)
-alerts 1───* alert_messages                   (per language)
-alert_templates 1───* alert_messages
+alerts ─*:1─ risk_assessments (triggering)
+alerts ─1:*─ notification_deliveries ─*:1─ users
+users ─1:*─ user_devices
 
-incidents 1───* field_reports
-alerts 0..1───* incidents
-risk_zones 1───* incidents
-field_reports 1───* evidence
-
-locations (villages, road segments, facilities) ── exposure for priority
-incidents 1───* response_priorities (history)
-
-audit_log (polymorphic: entity_type + entity_id)
+audit_events (entity_type + entity_id, actor → users)
 ```
 
-## 3. Core tables
+## 4. MVP tables
 
-### 3.1 `organizations` *(supporting)*
+### 4.1 `users` [MVP]
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid PK | |
-| name | text | For example a district disaster management authority (demo entries are fictional) |
-| type | enum | `STATE_AUTHORITY`, `DISTRICT_AUTHORITY`, `LINE_DEPARTMENT`, `OTHER` |
-| jurisdiction_boundary_id | uuid FK → admin_boundaries | |
-
-### 3.2 `users`
-| Column | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| organization_id | uuid FK → organizations | |
-| full_name | text | |
+| full_name | text | Fictional for demo accounts |
 | email | text unique, nullable | |
-| phone | text, nullable | Personal data, access-restricted |
-| password_hash | text, nullable | Null if an external identity provider is used |
-| role | enum | `ADMIN`, `STATE_AUTHORITY`, `DISTRICT_AUTHORITY`, `FIELD_OFFICER` |
-| preferred_language | text | BCP 47 code, for example `en`, `hi`, `as` |
+| phone | text, nullable | **Only with consent**, access-restricted, never logged in full |
+| phone_consent_at | timestamptz, nullable | Required if `phone` is set |
+| password_hash | text | |
+| role | enum | `ADMIN`, `STATE_AUTHORITY`, `DISTRICT_AUTHORITY`, `FIELD_OFFICER`, `CITIZEN` |
+| admin_boundary_id | uuid FK → admin_boundaries | Jurisdiction (authorities, officers) or registered area (citizens) |
+| registered_location | geometry(Point, 4326), nullable | Citizens only, with consent. Used to target public warnings. |
+| preferred_language | text | BCP 47, for example `en`, `hi`, pilot-area language code |
+| sms_enabled | boolean | |
 | is_active | boolean | |
-| last_known_location | geometry(Point, 4326), nullable | Only stored if a consented, explicit feature needs it |
-| is_demo_account | boolean | True for `SIMULATED_DEMO` users |
+| is_demo_account | boolean | |
 | created_at / updated_at | timestamptz | |
 
-### 3.3 `admin_boundaries` *(supporting)*
+### 4.2 `user_devices` [MVP] — FCM push tokens (H8)
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid PK | |
-| level | enum | `COUNTRY`, `STATE`, `DISTRICT`, `SUBDISTRICT`, `BLOCK`, `VILLAGE` |
+| user_id | uuid FK → users | |
+| platform | enum | `ANDROID`, `IOS` |
+| push_token | text | Secret. Never logged. |
+| app_version | text | |
+| last_seen_at | timestamptz | |
+
+### 4.3 `admin_boundaries` [MVP]
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid PK | |
+| level | enum | `STATE`, `DISTRICT`, `SUBDISTRICT`, `BLOCK`, `VILLAGE` |
 | name | text | |
-| lgd_code | text, nullable | Local Government Directory code (canonical join key) |
+| lgd_code | text, nullable | Local Government Directory code |
 | parent_id | uuid FK → admin_boundaries | |
 | geom | geometry(MultiPolygon, 4326) | |
 | source_id | uuid FK → data_sources | |
 
-### 3.4 `locations`
-Named places relevant to exposure and response.
+### 4.4 `data_sources` [MVP] — dataset registry and **integration status registry**
+Covers datasets, live adapters **and** notification channels. Exposed by `GET /data-sources`.
 
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid PK | |
-| type | enum | `VILLAGE`, `TOWN`, `ROAD_SEGMENT`, `BRIDGE`, `SCHOOL`, `HEALTH_FACILITY`, `SHELTER`, `OTHER` |
-| name | text | |
-| geom | geometry(Geometry, 4326) | Point for villages/facilities, LineString for roads |
+| slug | text unique | For example `imd-gridded-rainfall`, `imd-weather-api`, `imerg-feed`, `virtual-soil-moisture`, `sensor-gateway`, `sentinel2-composite`, `sms-channel`, `app-push-channel` |
+| kind | enum | `WEATHER_HISTORICAL`, `WEATHER_LIVE`, `WEATHER_FORECAST`, `SENSOR`, `SATELLITE_LAYER`, `SATELLITE_FEED`, `TERRAIN`, `INVENTORY`, `EXPOSURE`, `BOUNDARY`, `NOTIFICATION_CHANNEL`. 🔶 There is no soil category yet: add `SOIL` (or widen `TERRAIN`) before soil-property features (S31, S32) ever enter a pilot handoff. |
+| provider | text | |
+| dataset | text | Product name + version |
+| connection_status | enum | See §1 |
+| status_note | text | For example "IMD API access requested on <date>, ref <id>" |
+| access_requested_at | timestamptz, nullable | |
+| last_success_at | timestamptz, nullable | |
+| last_error | text, nullable | |
+| verification_status | enum | `UNVERIFIED`, `VERIFIED`, `REJECTED` (from [data-strategy.md](data-strategy.md)) |
+| verified_at | date, nullable | |
+| licence | text | |
+| attribution_text | text | Shown in the UI where the data appears |
+| provenance_default | enum | |
+| metadata | jsonb | For example satellite layer acquisition date range, storage path, resolution. Forecast provider label (IMD / non-IMD). |
+
+**Rule:** `connection_status` may be set to `CONNECTED_LIVE` only by a successful real call to a real source, never by seed data.
+
+### 4.5 `model_versions` [MVP]
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid PK | |
+| version | text unique | For example `b0-rules-0.1.0`, `susc-gbm-0.1.0` |
+| model_type | enum | `RULES_B0`, `LOGREG`, `TREE_ENSEMBLE` |
+| stage | enum | `SUSCEPTIBILITY`, `TRIGGER`, `COMBINED` |
+| git_commit | text | |
+| data_version | text | Hash of the training data snapshot |
+| feature_config | jsonb | |
+| thresholds | jsonb | Severity boundaries + rationale |
+| sensor_modifier_config | jsonb, nullable | Bounded rule parameters ([ml-strategy.md §2.4](ml-strategy.md)) |
+| validation_scheme | text | For example "spatial block CV, k=5" |
+| metrics | jsonb, nullable | **Null until really evaluated.** Never populated from simulated data. |
+| forecast_skill_evaluated | boolean | Default false |
+| model_card_uri | text | |
+| is_active | boolean | |
+
+### 4.6 `risk_zones` [MVP]
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid PK | |
+| grid_code | text unique | Stable cell ID |
+| geom | geometry(Polygon, 4326) | 250–500 m cell |
+| centroid | geometry(Point, 4326) | |
 | admin_boundary_id | uuid FK → admin_boundaries | |
-| population | integer, nullable | With `population_source_year` (for example 2011) |
-| population_source_year | smallint, nullable | |
-| attributes | jsonb | For example OSM tags, road class |
-| source_id | uuid FK → data_sources | |
-| provenance | enum | |
-
-### 3.5 `risk_zones`
-Analysis units: grid cells (MVP), later optionally slope units or polygons.
-
-| Column | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| zone_type | enum | `GRID_CELL`, `SLOPE_UNIT`, `CUSTOM_POLYGON` |
-| grid_code | text unique, nullable | Stable cell identifier |
-| geom | geometry(Polygon, 4326) | |
-| centroid | geometry(Point, 4326) | Precomputed |
-| admin_boundary_id | uuid FK → admin_boundaries | District (and block) containing the centroid |
-| static_features | jsonb | slope_deg, elevation_m, relief_m, landcover, etc., with a feature version |
+| static_features | jsonb | Terrain (slope, relief, curvature), satellite (land cover, vegetation index), history, exposure counts |
 | static_feature_version | text | |
-| susceptibility_score | real, nullable | Latest Stage A score (denormalised for fast maps) |
-| current_risk_class | enum, nullable | Denormalised latest class: `LOW`, `MODERATE`, `HIGH`, `VERY_HIGH` |
+| current_severity | enum, nullable | Stored copy of the latest current assessment: `LOW`, `MODERATE`, `HIGH`, `VERY_HIGH` |
 | current_assessment_id | uuid FK → risk_assessments, nullable | |
 
-### 3.6 `environmental_observations`
+### 4.7 `rainfall_observations` [MVP]
 | Column | Type | Notes |
 |---|---|---|
-| id | bigserial / uuid PK | High volume. A partitioning strategy (by time) is decided later. |
-| risk_zone_id | uuid FK → risk_zones, nullable | Set when aggregated to a cell |
-| geom | geometry(Geometry, 4326), nullable | Original point/footprint where relevant |
-| variable | enum/text | `RAINFALL`, `SOIL_MOISTURE`, `NDVI`, … |
-| aggregation | text | For example `sum_24h`, `sum_72h`, `mean_daily` |
-| value | double precision | |
-| unit | text | `mm`, `m3/m3`, … |
-| observed_start / observed_end | timestamptz | Validity window |
-| is_forecast | boolean | Forecasts must never be confused with observations |
+| id | bigint PK | |
+| risk_zone_id | uuid FK → risk_zones | |
+| period_start / period_end | timestamptz | |
+| rainfall_mm | double precision | |
 | source_id | uuid FK → data_sources | |
-| ingestion_run_id | uuid FK → data_ingestion_runs | |
-| provenance | enum | |
+| provenance | enum | `REAL_HISTORICAL`, `REAL_LIVE` or `SIMULATED_DEMO` (replay fallback) |
 | quality_flag | text, nullable | |
 
-Unique constraint (conceptual): `(risk_zone_id, variable, aggregation, observed_start, observed_end, source_id)`.
+Unique: `(risk_zone_id, period_start, period_end, source_id)`. Aggregates (3/7/15/30-day totals, anomaly) are computed in the scoring step, not stored separately in the MVP.
 
-### 3.7 `historical_landslides`
+### 4.8 `rainfall_forecasts` [MVP]
+| Column | Type | Notes |
+|---|---|---|
+| id | bigint PK | |
+| risk_zone_id | uuid FK → risk_zones | |
+| issue_time | timestamptz | When the forecast was issued |
+| valid_start / valid_end | timestamptz | |
+| lead_time_h | smallint | 24, 48, 72 |
+| rainfall_mm | double precision | |
+| source_id | uuid FK → data_sources | Metadata states IMD / non-IMD / replay |
+| provenance | enum | `REAL_LIVE` or `SIMULATED_DEMO` |
+
+**Rule:** forecasts are never stored in `rainfall_observations`.
+
+### 4.9 `sensor_stations` [MVP]
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid PK | |
+| station_code | text unique | |
+| name | text | |
+| station_type | enum | `VIRTUAL`, `PHYSICAL` |
+| geom | geometry(Point, 4326) | |
+| variables | text[] | MVP: `SOIL_MOISTURE_VWC` |
+| depth_cm | real, nullable | |
+| influence_radius_m | real | Documented assumption used by the adjustment rule |
+| api_key_hash | text | Per-station ingestion key (hash only) |
+| status | enum | `ACTIVE`, `INACTIVE` |
+| source_id | uuid FK → data_sources | |
+| provenance | enum | `VIRTUAL` stations are always `SIMULATED_DEMO` |
+| last_reading_at | timestamptz, nullable | |
+
+### 4.10 `sensor_readings` [MVP]
+| Column | Type | Notes |
+|---|---|---|
+| id | bigint PK | |
+| station_id | uuid FK → sensor_stations | |
+| variable | text | `SOIL_MOISTURE_VWC` |
+| value | double precision | |
+| unit | text | `m3/m3` |
+| observed_at | timestamptz | Device time |
+| received_at | timestamptz | Server time |
+| quality_flag | enum | `OK`, `SUSPECT`, `OUT_OF_RANGE` |
+| provenance | enum | Copied from the station |
+
+Unique: `(station_id, variable, observed_at)`, which makes retries safe.
+[EXTENSION]: time partitioning, retention policy, more variables (rain gauge, piezometer, tilt).
+
+### 4.11 `historical_landslides` [MVP]
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid PK | |
 | geom | geometry(Geometry, 4326) | Point or polygon as provided |
-| event_date | date, nullable | Many inventory records lack dates |
+| event_date | date, nullable | |
 | event_date_precision | enum | `EXACT`, `MONTH`, `YEAR`, `UNKNOWN` |
-| location_accuracy_m | real, nullable | From source if available |
-| trigger | text, nullable | For example rainfall, earthquake, unknown |
+| location_accuracy_m | real, nullable | |
+| trigger | text, nullable | As given in the source |
 | landslide_type | text, nullable | As given in the source |
 | fatalities | integer, nullable | Only if in the source. Never estimated. |
-| description | text, nullable | |
 | source_id | uuid FK → data_sources | |
-| source_record_id | text | ID in the original dataset |
-| provenance | enum | Normally `REAL_HISTORICAL` |
+| source_record_id | text | |
+| provenance | enum | `REAL_HISTORICAL` |
 | used_in_training | boolean | |
 
-### 3.8 `incidents`
-An operational event being handled by authorities. It may group multiple field reports.
-
+### 4.12 `risk_assessments` [MVP] — current and forecast risk
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid PK | |
-| title | text | |
-| status | enum | `OPEN`, `IN_RESPONSE`, `RESOLVED`, `ESCALATED` |
-| category | enum | `LANDSLIDE`, `CRACK`, `SEEPAGE`, `ROCKFALL`, `ROAD_BLOCKED`, `SUBSIDENCE`, `OTHER` |
-| severity | enum | `LOW`, `MEDIUM`, `HIGH`, `CRITICAL` (highest verified) |
-| geom | geometry(Point, 4326) | Representative location |
 | risk_zone_id | uuid FK → risk_zones | |
-| alert_id | uuid FK → alerts, nullable | Alert that prompted verification, if any |
-| verification_status | enum | `UNVERIFIED`, `VERIFIED`, `REJECTED` |
-| provenance | enum | `REAL_LIVE` in operations. `SIMULATED_DEMO` in the demo. |
-| created_by | uuid FK → users | |
-| opened_at / resolved_at | timestamptz | |
+| model_version_id | uuid FK → model_versions | |
+| lead_time_h | smallint | `0` = current, `24`/`48`/`72` = forecast |
+| issue_time | timestamptz | Scoring time (current) or forecast issue time |
+| valid_from / valid_until | timestamptz | |
+| score | real | 0–1 |
+| severity | enum | `LOW`, `MODERATE`, `HIGH`, `VERY_HIGH` |
+| confidence | enum | `LOW`, `MEDIUM`, `HIGH` (decreases with lead time) |
+| factors | jsonb | Explanation list ([api.md §6.2](api.md)), each factor with its provenance |
+| input_provenance | text[] | For example `{REAL_HISTORICAL, SIMULATED_DEMO}` |
+| forecast_source_id | uuid FK → data_sources, nullable | Set when `lead_time_h > 0` |
+| run_mode | enum | `LIVE`, `DEMO_REPLAY` |
+| is_latest | boolean | Latest per `(risk_zone_id, lead_time_h, run_mode)` |
+| provenance | enum | `MODEL_OUTPUT` |
 
-### 3.9 `field_reports`
+### 4.13 `locations` [MVP] — villages and infrastructure
 | Column | Type | Notes |
 |---|---|---|
-| id | uuid PK | Server ID |
-| client_report_id | uuid **unique** | Generated on device. **Idempotency key for the offline sync.** |
+| id | uuid PK | |
+| type | enum | `VILLAGE`, `TOWN`, `SCHOOL`, `HEALTH_FACILITY`, `BRIDGE`, `SHELTER`, `OTHER` |
+| name | text, nullable | |
+| geom | geometry(Geometry, 4326) | |
+| admin_boundary_id | uuid FK → admin_boundaries | |
+| population | integer, nullable | With `population_source_year`. Omitted rather than guessed. |
+| population_source_year | smallint, nullable | |
+| access_status | enum | Villages/towns: `OK`, `ACCESS_AT_RISK`, `UNKNOWN` |
+| access_status_reason | text, nullable | |
+| access_status_updated_at | timestamptz, nullable | |
+| osm_id | text, nullable | |
+| attributes | jsonb | |
+| source_id | uuid FK → data_sources | |
+| provenance | enum | `REAL_HISTORICAL` |
+
+### 4.14 `road_segments` [MVP] — roads and connectivity status
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid PK | |
+| osm_way_id | text | |
+| name | text, nullable | |
+| road_class | text | From OSM |
+| geom | geometry(LineString, 4326) | Split at intersections |
+| status | enum | `OPEN` (no evidence of blockage), `AT_RISK`, `BLOCKED`, `UNKNOWN` |
+| status_source | enum | `MODEL_RISK`, `VERIFIED_REPORT`, `AUTHORITY_OVERRIDE`, `NONE` |
+| status_reason | text | |
+| status_lead_time_h | smallint, nullable | For `AT_RISK` from forecast risk |
+| status_report_id | uuid FK → reports, nullable | |
+| status_updated_by | uuid FK → users, nullable | |
+| status_updated_at | timestamptz | |
+| source_id | uuid FK → data_sources | |
+| provenance | enum | Geometry `REAL_HISTORICAL`. Status is our output. |
+
+**Precedence:** `AUTHORITY_OVERRIDE` > `VERIFIED_REPORT` (`BLOCKED`) > `MODEL_RISK` (`AT_RISK`) > `OPEN`/`UNKNOWN`.
+[EXTENSION]: `road_graph_*` tables for route calculation.
+
+### 4.15 `reports` [MVP] — field and citizen reports
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid PK | |
+| client_report_id | uuid **unique** | Device-generated **idempotency key** for offline sync |
 | reporter_id | uuid FK → users | |
-| incident_id | uuid FK → incidents, nullable | Linked automatically or by the authority |
-| alert_id | uuid FK → alerts, nullable | If the report answers an alert/task |
-| category | enum | Same as incidents |
-| severity | enum | Reporter's assessment |
+| reporter_role | enum | `FIELD_OFFICER`, `CITIZEN` (copied from the user at submit time) |
+| alert_id | uuid FK → alerts, nullable | |
+| category | enum | `LANDSLIDE`, `CRACK`, `SEEPAGE`, `ROCKFALL`, `ROAD_BLOCKED`, `SUBSIDENCE`, `OTHER` |
+| severity | enum | `LOW`, `MEDIUM`, `HIGH`, `CRITICAL` |
 | description | text | |
 | language | text | BCP 47 |
 | geom | geometry(Point, 4326) | Device GPS |
 | gps_accuracy_m | real | |
-| altitude_m | real, nullable | |
-| captured_at | timestamptz | Device time when the report was created (may be offline) |
-| submitted_at | timestamptz | Server receipt time |
-| device_info | jsonb | App version, OS (no unnecessary identifiers) |
+| location_adjusted_manually | boolean | Disclosed pin adjustment |
+| captured_at | timestamptz | Device time (may be offline) |
+| submitted_at | timestamptz | Server receipt |
+| risk_zone_id | uuid FK → risk_zones, nullable | |
+| road_segment_id | uuid FK → road_segments, nullable | Nearest segment within a set distance |
+| media_expected | smallint | |
 | verification_status | enum | `UNVERIFIED`, `VERIFIED`, `REJECTED` |
-| verified_by | uuid FK → users, nullable | |
-| verified_at | timestamptz, nullable | |
-| verification_note | text, nullable | |
+| verified_by / verified_at / verification_note | | |
+| device_info | jsonb | App version, platform |
 | provenance | enum | |
 | deleted_at | timestamptz, nullable | |
 
-### 3.10 `evidence`
+**Rule:** only `VERIFIED` reports affect road status or priority. Citizen reports always start `UNVERIFIED`.
+
+### 4.16 `evidence` [MVP] — photo/video media
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid PK | |
-| field_report_id | uuid FK → field_reports | |
-| client_evidence_id | uuid unique | Idempotency for media upload |
-| media_type | enum | `PHOTO`, `VIDEO`, `AUDIO` (future) |
+| report_id | uuid FK → reports | |
+| client_media_id | uuid unique | Idempotency for media upload |
+| media_type | enum | `PHOTO`, `VIDEO` |
 | mime_type | text | Validated server-side |
-| storage_key | text | Object storage key. **Files are never stored in the DB.** |
+| storage_key | text | Object storage key. Files never go in the database. |
 | size_bytes | bigint | |
-| sha256 | text | Integrity and deduplication |
-| duration_s | real, nullable | Video |
-| geom | geometry(Point, 4326), nullable | From EXIF or device, if available |
+| sha256 | text | |
+| duration_s | real, nullable | Video ≤30 s (frozen, api.md §5.7; the server rejects longer clips) |
+| geom | geometry(Point, 4326), nullable | EXIF/device, if available |
 | captured_at | timestamptz, nullable | |
 | upload_status | enum | `PENDING`, `UPLOADED`, `FAILED` |
 | created_at | timestamptz | |
 
-### 3.11 `alerts`
+### 4.17 `alerts` [MVP] — tiered alerts
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid PK | |
-| status | enum | `DRAFT`, `APPROVED`, `PUBLISHED`, `REJECTED`, `CLOSED` |
-| severity | enum | Maps from risk class: `ADVISORY`, `WATCH`, `WARNING` (names to be reviewed; must not be mistaken for official agency terminology) |
-| risk_zone_id | uuid FK → risk_zones, nullable | |
-| area_geom | geometry(MultiPolygon, 4326) | Affected area (may merge several cells) |
-| admin_boundary_id | uuid FK → admin_boundaries | Jurisdiction |
-| triggering_assessment_id | uuid FK → risk_assessments, nullable | |
+| tier | enum | `WATCH` (internal), `WARNING` (public), `UPDATE` (update / all-clear) |
+| status | enum | `DRAFT`, `AUTO_DISPATCHED`, `APPROVED`, `DISPATCHED`, `REJECTED`, `CLOSED` |
+| severity | enum | `HIGH`, `VERY_HIGH` (from the triggering assessment) |
 | trigger_type | enum | `AUTOMATIC_THRESHOLD`, `MANUAL` |
-| explanation_snapshot | jsonb | Factors at draft time (immutable) |
+| lead_time_h | smallint | `0` current, or forecast horizon |
+| area_geom | geometry(MultiPolygon, 4326) | Union of affected cells |
+| risk_zone_ids | uuid[] | |
+| admin_boundary_id | uuid FK → admin_boundaries | |
+| triggering_assessment_id | uuid FK → risk_assessments, nullable | |
+| explanation_snapshot | jsonb | Factors at creation (unchangeable) |
+| messages | jsonb | `{lang: {title, body, sms_text}}` rendered from reviewed templates |
+| languages | text[] | |
 | recommended_actions | text | |
-| valid_from / valid_until | timestamptz | |
-| created_by_system | boolean | |
-| approved_by | uuid FK → users, nullable | **Required for `PUBLISHED`** |
-| approved_at / published_at / closed_at | timestamptz | |
-| provenance | enum | `MODEL_OUTPUT` (automatic) and/or `SIMULATED_DEMO` input flag |
+| approved_by / approved_at | | Required for `WARNING` dispatch |
+| dispatched_at / closed_at | timestamptz | |
+| run_mode | enum | `LIVE`, `DEMO_REPLAY` |
+| provenance | enum | `MODEL_OUTPUT` |
 | is_demo | boolean | |
 
-Constraint (conceptual): `status = 'PUBLISHED'` ⇒ `approved_by IS NOT NULL`.
+**Constraints (conceptual):**
+- `tier = 'WARNING' AND status = 'DISPATCHED'` ⇒ `approved_by IS NOT NULL`
+- `status = 'AUTO_DISPATCHED'` ⇒ `tier = 'WATCH'`
+- One open alert per `(tier, risk_zone)`. Later triggers attach to it.
 
-## 4. Supporting tables
-
-| Table | Purpose | Key columns |
+### 4.18 `notification_deliveries` [MVP]
+| Column | Type | Notes |
 |---|---|---|
-| `data_sources` | Registry of datasets (see [data-strategy.md §13](data-strategy.md)) | provider, dataset, version, licence, attribution_text, status, provenance_default |
-| `data_ingestion_runs` | Each ingestion job run | source_id, started_at, finished_at, window_start/end, status, rows_written, error |
-| `model_versions` | Registered models | version, model_type, git_commit, data_version, feature_config, metrics jsonb, model_card_uri, is_active |
-| `risk_assessments` | Time series of scores per zone | risk_zone_id, model_version_id, assessed_at, valid_from/until, score, risk_class, confidence, input_provenance (did inputs include simulated data?), provenance=`MODEL_OUTPUT` |
-| `risk_factors` | Explanation rows | risk_assessment_id, feature, label, value, unit, contribution, direction, rank |
-| `alert_templates` | Human-reviewed message templates | severity, language, title_template, body_template, reviewed_by, version |
-| `alert_messages` | Rendered alert per language | alert_id, language, title, body, template_id |
-| `alert_recipients` | Delivery and acknowledgement | alert_id, user_id, channel (`IN_APP`), delivered_at, acknowledged_at |
-| `response_priorities` | Priority snapshots | incident_id / risk_zone_id, score, rank, reasons jsonb, computed_at, rule_version |
-| `audit_log` | Accountability | actor_id, action, entity_type, entity_id, before jsonb, after jsonb, at |
+| id | uuid PK | |
+| alert_id | uuid FK → alerts | |
+| recipient_id | uuid FK → users | |
+| channel | enum | `APP_PUSH`, `APP_INBOX`, `SMS` |
+| language | text | |
+| destination_masked | text, nullable | For example `+91******1234` |
+| rendered_text | text | Exact message (SMS sandbox proof) |
+| status | enum | `QUEUED`, `SENT`, `SANDBOXED`, `FAILED`, `ACKNOWLEDGED` |
+| channel_mode | enum | `LIVE`, `SANDBOX` |
+| provider_message_id | text, nullable | Only from a real provider response |
+| error | text, nullable | |
+| queued_at / sent_at / acknowledged_at | timestamptz | |
 
-## 5. Important geographic fields and queries
+**Rule:** `status = 'SENT'` requires `channel_mode = 'LIVE'`. Sandbox deliveries are always `SANDBOXED`.
 
-| Need | Geometry | Query pattern |
+### 4.19 `audit_events` [MVP, minimal]
+| Column | Type | Notes |
 |---|---|---|
-| Risk map for a viewport | `risk_zones.geom` | `ST_Intersects(geom, ST_MakeEnvelope(...))` + current class |
-| Risk at a tapped point | `risk_zones.geom` | `ST_Contains(geom, point)` |
-| Link a report to a zone | `field_reports.geom` → `risk_zones.geom` | `ST_Contains` |
-| Attach a report to a nearby open incident | `incidents.geom` | `ST_DWithin(geography, radius_m)` + time window |
-| Exposure for priority | `locations.geom` within alert/zone area | `ST_DWithin` / `ST_Intersects` |
-| Past landslides near a zone | `historical_landslides.geom` | `ST_DWithin` on geography |
-| Jurisdiction filter | `admin_boundaries.geom` | `ST_Within` / FK |
+| id | bigint PK | |
+| actor_id | uuid FK → users, nullable | Null = system (for example auto-dispatch) |
+| action | text | `ALERT_AUTO_DISPATCHED`, `ALERT_APPROVED`, `REPORT_VERIFIED`, `ROAD_STATUS_OVERRIDDEN`, `THRESHOLD_CHANGED`, … |
+| entity_type / entity_id | text / uuid | |
+| details | jsonb | |
+| at | timestamptz | |
 
-Notes:
-- Use the `geography` cast or a projected CRS for distances in metres.
-- Simplified geometry variants (or vector tiles) may be needed for map performance at wider zoom. Decide in Phase 2.
+## 5. Extension tables (post-MVP)
 
-## 6. Data retention and privacy (initial)
+| Table | Purpose |
+|---|---|
+| `organizations` | Multi-agency and multi-district operations |
+| `incidents` | Grouping of reports into managed incidents with a response lifecycle |
+| `alert_templates` | Template management UI (MVP: reviewed templates in config files) |
+| `response_priority_snapshots` | Priority history (MVP: computed on request) |
+| `data_ingestion_runs` | Per-run history (MVP: `data_sources.last_success_at` / `last_error`) |
+| `road_graph_nodes` / `road_graph_edges` | Route calculation |
+| `sms_opt_outs` | Production SMS compliance |
+| Raster storage | PostGIS rasters or cloud-optimised GeoTIFF catalogue for live satellite feeds |
 
-- Evidence media and reports are retained per a policy to be agreed with the stakeholder (🔶 human decision).
-- Phone numbers and precise user locations are access-controlled and excluded from analytics exports.
-- Demo data lives in a separate database or schema, or is flagged with `is_demo` / `provenance = SIMULATED_DEMO`, so it can be purged.
+## 6. Important geographic queries
+
+| Need | Query pattern |
+|---|---|
+| Risk map for viewport and lead time | `risk_assessments` (`is_latest`, `lead_time_h`) joined to `risk_zones.geom` with `ST_Intersects(bbox)` |
+| Risk at a point | `ST_Contains(risk_zones.geom, point)` |
+| Report → cell, nearest road segment | `ST_Contains`. Nearest-neighbour ordering on `road_segments.geom` with an `ST_DWithin` limit. |
+| Road `AT_RISK` | `ST_Intersects(road_segments.geom, cells with severity ≥ HIGH)` |
+| Village access at risk | All segments within X m of the village are `BLOCKED`/`AT_RISK` (`ST_DWithin` on geography) |
+| Sensor → cells | `ST_DWithin(station.geom::geography, cell.centroid::geography, influence_radius_m)` |
+| Exposure per cell | Count `locations` by type within or near the cell |
+| Public warning recipients | Citizens with `ST_Within(registered_location, alerts.area_geom)` or `admin_boundary_id` match, and consent |
+
+Use `geography` casts or a projected CRS for distances in metres.
+
+## 7. Data retention and privacy
+
+- Citizen phone numbers and registered locations: consent required, access limited to the notification module and admins, excluded from exports and logs.
+- Evidence media: retention period is a 🔶 human decision (with stakeholder input).
+- Demo data is flagged (`is_demo_account`, `is_demo`, `SIMULATED_DEMO`, `run_mode = DEMO_REPLAY`) and purgeable by the reset script.

@@ -1,5 +1,7 @@
 # Data Strategy — GeoRakshak
 
+> **Revision:** aligned with the official SIH26001 requirements (OR-01 to OR-21, see [product-spec.md §2](product-spec.md)). The official statement explicitly names soil moisture sensors, satellite imagery and feeds, IMD weather APIs, sensor data, road connectivity and weather-linked forecasts. These are now MVP data needs, not optional ones. New or changed sections: §1, §2.7, §2.8, §3.3, §3 recommendation, §7 MVP use, §8.3, §9.4, §11, §12.
+
 ## 0. Read this first
 
 - **Verification status.** The sources below are well-known public datasets and portals, recorded from the team's existing knowledge. **None has yet been checked hands-on for this project.** Before anyone relies on a source, the owner must confirm the following, then set its `Status` to `VERIFIED` with the date:
@@ -9,25 +11,82 @@
 - **Licences.** "Licensing considerations" below are summaries to check, not legal advice. Read and record the actual licence text at verification time.
 - **Owner:** AI/ML Engineer (acquisition and preprocessing). Product/Communication Lead tracks licence/attribution records (see [team.md](team.md)).
 
-Status legend: `UNVERIFIED` (known to exist, not yet tested by us) · `VERIFIED (date)` · `REJECTED (reason)`
+Status legend (source verification): `UNVERIFIED` (known to exist, not yet tested by us) · `VERIFIED (date)` · `REJECTED (reason)`
+
+Connection status (runtime, stored in `data_sources.connection_status`, shown on the dashboard): `CONNECTED_LIVE` · `CONNECTED_HISTORICAL` · `SIMULATED` · `SANDBOX` · `AWAITING_ACCESS` · `NOT_CONNECTED`. A source reaches `CONNECTED_LIVE` only after a successful real call (see [CLAUDE.md §9](../CLAUDE.md)).
+
+MVP classes per layer (CORE / LIGHTWEIGHT / INTEGRATION-READY) follow [product-spec.md §2](product-spec.md) and are listed in §1 and §12.
 
 ---
 
 ## 1. Data needs overview
 
-| Layer | Role in risk model | Type | Static/Dynamic | MVP priority |
-|---|---|---|---|---|
-| Rainfall | Main trigger for landslides in NER monsoon conditions | Gridded raster / time series | Dynamic | **Must** |
-| Soil moisture | Antecedent wetness | Gridded raster | Dynamic | Should |
-| Elevation (DEM) | Terrain base, derives slope/aspect/curvature | Raster | Static | **Must** |
-| Slope | Key susceptibility factor | Derived raster | Static | **Must** |
-| Historical landslides | Training labels and validation | Points/polygons | Mostly static | **Must** |
-| Satellite / remote sensing | Land cover, vegetation, change detection | Raster | Periodic | Could (MVP: land cover only) |
-| Roads | Exposure and access, and a known bias in inventories | Lines | Static-ish | **Must** |
-| Villages | Exposure for response priority | Points/polygons + attributes | Static | **Must** |
-| Administrative boundaries | Aggregation, filtering, authority jurisdiction | Polygons | Static | **Must** |
+| Layer | Official req | Role | Type | Static/Dynamic | MVP class | MVP data provenance |
+|---|---|---|---|---|---|---|
+| Rainfall (historical) | OR-01 | Trigger features, normal-rainfall baseline, replay | Gridded time series | Dynamic | CORE | **Real** (`REAL_HISTORICAL`) |
+| Rainfall (live / forecast) | OR-01, OR-13, OR-17 | Current and forecast risk | Gridded / point time series | Dynamic | LIGHTWEIGHT | Real from an approved provider (`REAL_LIVE`), or replay (`SIMULATED_DEMO` / `REAL_HISTORICAL`) |
+| IMD weather API | OR-17 | Live IMD observations/forecasts | API | Dynamic | INTEGRATION-READY | None until access is granted |
+| Soil moisture sensors | OR-02, OR-19 | Wetness modifier, monitoring layer | Point time series | Dynamic | LIGHTWEIGHT | **Virtual stations** (`SIMULATED_DEMO`) |
+| Soil moisture (satellite / reanalysis) | OR-02 (supporting) | Regional wetness context | Gridded raster | Dynamic | Optional | Real if used |
+| Elevation (DEM) | OR-04 | Terrain base | Raster | Static | CORE | **Real** |
+| Slope and derivatives | OR-04 | Susceptibility factors | Derived raster | Static | CORE | **Real** (derived) |
+| Historical landslides | OR-05 | Labels, validation, map layer | Points/polygons | Mostly static | CORE | **Real** |
+| Satellite imagery (derived layers) | OR-03 | Vegetation index, land cover, imagery layer | Raster | Periodic (precomputed) | LIGHTWEIGHT | **Real** with acquisition date |
+| Satellite feed (IMERG) | OR-18 | Near-real-time satellite rainfall | Gridded time series | Dynamic | INTEGRATION-READY | None until connected |
+| Roads | OR-09, OR-12 | Exposure, connectivity status | Lines | Static-ish | CORE / LIGHTWEIGHT | **Real** (OSM) + status derived from our model and reports |
+| Villages | OR-09 | Exposure | Points/polygons + attributes | Static | CORE | **Real** |
+| Critical infrastructure | OR-09 | Exposure, priority | Points/polygons | Static | CORE | **Real** (OSM, completeness caveat) |
+| Administrative boundaries | — | Aggregation, jurisdiction | Polygons | Static | CORE | **Real** |
 
-Grid proposal (pending ML validation): a uniform analysis grid over the pilot area. Cell size is chosen between the resolution of the DEM (~30 m) and that of the rainfall data (~5–25 km). Terrain attributes come at fine resolution, and rainfall is resampled or assigned to cells with its coarse origin documented.
+Grid proposal (pending ML validation): a uniform analysis grid over the pilot area, **250–500 m cells** over a pilot area of a few hundred km². Terrain and satellite attributes are aggregated from ~10–30 m inputs as cell statistics. Rainfall (~5–25 km) is assigned to cells with its coarse origin documented. A 30 m scoring grid over a whole district would mean millions of cells, which is impractical for the prototype.
+
+### 1a. Source register (every source at a glance)
+
+Column meanings:
+- **MVP data status:** the provenance label and dashboard connection status this source will carry in the MVP.
+- **Verification:** as of 2026-09-17, the Phase 0 data spike ([ml/reports/data-spike.md](../ml/reports/data-spike.md)) checked access for S1, S11, S15, S16, S18, S20, S22 and S23. "ACCESS VERIFIED" means data was actually retrieved. It is **not** final source selection, which stays pending (H10). No live source (IMD API, IMERG, sensor gateway) is connected.
+- **Licence/attribution:** summaries to confirm against the actual licence text at verification.
+- **Fallback:** what we use if this source fails verification or access.
+
+| # | Source (provider · dataset) | Purpose | MVP data status | Licence / attribution | Update mode | Fallback | Verification |
+|---|---|---|---|---|---|---|---|
+| S1 | IMD · gridded daily rainfall 0.25° (§2.1) | Rainfall features, normal baseline, replay (OR-01) | **Real** · `REAL_HISTORICAL` / `CONNECTED_HISTORICAL` | IMD Pune disclaimer: no reproduction without prior permission. Cite Pai et al. 2014 (MAUSAM 65(1)). | Batch file download, periodic reload | S6 CHIRPS | ACCESS VERIFIED 2026-09-17: `POST https://imdpune.gov.in/cmpg/Griddata/rainfall.php` returns yearly `.grd` files (the `www.` host timed out). ⚠️ No open licence found: the IMD Pune disclaimer says data "should not be reproduced anywhere without prior permission". Local development use only until permission is obtained or the team decides otherwise. Cite Pai et al. 2014. [data spike](../ml/reports/data-spike.md) |
+| S2 | IMD · weather API (§2.7) | Live IMD observations/forecasts (OR-17) | **Integration-ready** · no data · `AWAITING_ACCESS` | IMD API terms (unknown) | Scheduled poll once granted | S3, then S4 | UNVERIFIED (access to be requested) |
+| S3 | Non-IMD forecast provider, **Open-Meteo** (§2.5, §2.8) | Forecast risk, and recent rainfall, if IMD access isn't granted (OR-13, H16) | **Real, labelled non-IMD** · `REAL_LIVE` | **CC-BY 4.0**, non-commercial use, <10,000 calls/day ([terms](https://open-meteo.com/en/terms), read 2026-09-18). Attribution to Open-Meteo and the underlying national weather services. | Scheduled poll (LIVE cycle) or on demand | S4 replay | **ACCESS VERIFIED 2026-09-18** with one real call for the pilot: 9 provider points → 10 days of recent daily precipitation and 3 forecast days, stored as `REAL_LIVE`. Adapter implemented and **disabled by default** (`WEATHER_PROVIDER=none`) pending the H10 source decision. Its "recent" precipitation is **model output, not gauge observations** — labelled as such, and never presented as IMD. |
+| S4 | GeoRakshak replay scenario (§11) | Deterministic demo rainfall + forecast | **Real historical** period (`REAL_HISTORICAL`) preferred, else **simulated** (`SIMULATED_DEMO`) | Inherits S1 terms if real | On demand (replay job) | Synthetic scenario | n/a (team-built) |
+| S5 | NASA · GPM IMERG (§2.2) | Satellite rainfall feed (OR-18) | **Integration-ready** · no data · `NOT_CONNECTED` | NASA open data, citation | Scheduled download, if connected | S1 | UNVERIFIED |
+| S6 | UCSB CHC · CHIRPS (§2.3) | Historical rainfall backup | Real (`REAL_HISTORICAL`) if used | CHC licence + citation (to verify) | Batch | S7 | UNVERIFIED |
+| S7 | ECMWF/C3S · ERA5-Land (§2.4) | Reanalysis rainfall / soil water backup | Real (`REAL_HISTORICAL`, model-based) if used | Copernicus licence, attribution | Batch via CDS | S5 | UNVERIFIED |
+| S8 | GeoRakshak · virtual soil moisture stations (§3.3) | Sensor monitoring layer + rule adjustment (OR-02) | **Simulated** · `SIMULATED_DEMO` / `SIMULATED` | None (team-generated) | Push via sensor ingestion API (minutes) | "No sensor coverage" path | n/a (team-built) |
+| S9 | Real sensor gateway / partner network (§3.3) | Real in-situ sensor data (OR-19) | **Integration-ready** · no data · `NOT_CONNECTED` | Partner agreement (future) | Push via sensor ingestion API | S8 | No source identified |
+| S10 | NASA SMAP / ESA CCI SM (§3.1, §3.2) | Optional regional soil moisture context | Real (`REAL_HISTORICAL`) if used | NASA / ESA CCI policy, citation | Batch | Antecedent rainfall proxy | UNVERIFIED |
+| S11 | Copernicus · DEM GLO-30 (§4.1) | Terrain base (OR-04) | **Real** · `REAL_HISTORICAL` | Copernicus DEM licence, attribution | One-off load | S12 / S13 | ACCESS VERIFIED 2026-09-17: public bucket `copernicus-dem-30m.s3.amazonaws.com`, COG tiles. Surface model (includes canopy/buildings). [data spike](../ml/reports/data-spike.md) |
+| S12 | NASA/USGS · SRTM / NASADEM (§4.2) | Terrain backup | Real if used | US government data, citation | One-off | S11 | UNVERIFIED |
+| S13 | NRSC/ISRO · CartoDEM via Bhuvan (§4.3) | Terrain backup | Real if used | NRSC data policy (to verify) | One-off | S11 | UNVERIFIED as a DEM source. Checked 2026-09-18 for landslide data and **rejected**: Bhuvan WMS advertises 13,343 layers, none of them landslide; Bhuvan WFS returns "Service WFS is disabled"; downloads need a login; the NRSC Landslide Atlas is published as a PDF only. Not a data source for us. [inventory hunt](../ml/reports/inventory-hunt-2026-09-18.md) |
+| S14 | GeoRakshak · slope and derivatives (§5) | Susceptibility features (OR-04) | **Real, derived** · `REAL_HISTORICAL` | Inherits DEM licence | Recomputed when the DEM changes | Derive from backup DEM | n/a (derived) |
+| S15 | GSI · landslide inventory via Bhukosh (§6.1) | Labels, map layer (OR-05) | **Integration-ready** · not connected, **not in use** | GSI terms, attribution (unknown; portal unreachable) | One-off / periodic reload | S16 (in use) | UNREACHABLE 2026-09-17: `bhukosh.gsi.gov.in` timed out (4 attempts, https and http). Retried 7 more times 17:48–17:49 UTC with guessed ArcGIS/GeoServer paths: DNS resolves (144.24.99.164) but every TCP connect to 443 and 80 timed out; `gsi.gov.in` loads but exposes no GIS service link. Logs: `ml/data/raw/gsi/gsi_attempts_20260917.tsv`, `ml/data/raw/inventory_hunt/attempts.tsv`. **REJECTED for now** in favour of S15b, which serves GSI inventory data from a reachable host. The Bhukosh polygon services stay the target for mapped (polygon) labels. |
+| **S15b** | **GSI · landslide inventory via Bhusanket portal (§6.1)** | **Stage A labels, map layer, `past_landslide_density` (OR-05)** | **Real** · `REAL_HISTORICAL` / `CONNECTED_HISTORICAL` | 🔶 **No open licence.** [GSI Bhusanket terms](https://bhusanket.gsi.gov.in/terms.html): material "may be reproduced free of charge after taking proper permission by sending a mail to us", reproduced accurately, and "the source must be prominently acknowledged". Treated like S1 IMD: development use only until permission is obtained. | One-off / periodic reload | S16 | **ACCESS VERIFIED 2026-09-18**: open ArcGIS REST layer `bhusanket.gsi.gov.in/gisserver/rest/services/Hosted/Public_Portal_Dashboard_Map/FeatureServer/0` (layer `Landslide_Public`, points, 134 fields), discovered from the portal's `json/config.json`. Independently re-checked: 31,545 records nationally, 8,691 in the 8 NER states, 132 in the Aizawl pilot bbox. **Surveyed** records (movement type, material, trigger, mechanism, geology, dimensions, GSI citations). Limitations: `date`, `date_acc` and `geo_acc` are empty for every NER record (2,270 carry an initiation year), so it supports Stage A only, not dated Stage B; the `Landslide_Polygon` / `GSI_Landslide_India` polygon services return `499 Token Required`. [inventory hunt](../ml/reports/inventory-hunt-2026-09-18.md) |
+| S16 | NASA · Global Landslide Catalog (§6.2) | Dated labels, backup inventory | **Real** · `REAL_HISTORICAL` | NASA open data | One-off | S15 | ACCESS VERIFIED 2026-09-17 via NASA COOLR FeatureServer `gis.earthdata.nasa.gov/portal/rest/services/Landslides/COOLR_Reports_Points/FeatureServer/0` (live; carries NASA permission-to-use text). The old data.nasa.gov Socrata URL returns 404. The legacy CSV export states "License not specified" and is not used. Media-derived and biased toward roads/settlements (quantified in [ml-strategy.md §4](ml-strategy.md)). **Secondary inventory** since 2026-09-18: the map layer keeps its 19 pilot records, but Stage A labels now come from S15b (surveyed). [data spike](../ml/reports/data-spike.md) |
+| S17 | ESA/Copernicus · Sentinel-2 composite (§7.1, §7.5) | Vegetation index feature, imagery layer (OR-03) | **Real, precomputed** · `REAL_HISTORICAL` + acquisition dates | Copernicus Sentinel terms, attribution | Precomputed once (re-run per season if needed) | Landsat 8/9 (§7.3) | UNVERIFIED |
+| S18 | ESA · WorldCover (§7.4) | Land cover feature and layer (OR-03) | **Real** · `REAL_HISTORICAL` + product version | CC-BY 4.0 with attribution "© ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021)" | One-off | Bhuvan LULC | ACCESS VERIFIED 2026-09-17: WorldCover 2021 v200 S3 tiles, CC-BY 4.0. 10 NER tiles (832 MB) downloaded for the NER-wide Stage A background; acquisition range 2021-01-01/2021-12-31 is served with the layer. [data spike](../ml/reports/data-spike.md) |
+| S19 | ESA/Copernicus · Sentinel-1 (§7.2) | SAR / InSAR | **Post-MVP** · not used | Copernicus Sentinel terms | — | — | UNVERIFIED |
+| S20 | OSM via Geofabrik · roads (§8.1) | Exposure, road segments (OR-09) | **Real** · `REAL_HISTORICAL` | ODbL: "© OpenStreetMap contributors", share-alike | Extract reload (manual/periodic) | PMGSY (§8.2, unverified) | ACCESS VERIFIED 2026-09-17 via Overpass API (`overpass-api.de`), not Geofabrik. ODbL. Snapshot; completeness not assessed. [data spike](../ml/reports/data-spike.md) |
+| S21 | GeoRakshak · road connectivity status (§8.3) | Road status (OR-12) | **Our output** · `MODEL_OUTPUT` + verified reports | Geometry inherits ODbL | Every monitoring cycle and on verification | Manual authority status | n/a (derived) |
+| S22 | OSM · villages/places (§9.2) | Exposure (OR-09) | **Real** · `REAL_HISTORICAL` | ODbL | Extract reload | Village polygons (§9.3) | ACCESS VERIFIED 2026-09-17 via Overpass API. ODbL. [data spike](../ml/reports/data-spike.md) |
+| S23 | OSM · facilities (§9.4) | Exposure, priority (OR-09, OR-14) | **Real** · `REAL_HISTORICAL` (completeness caveat) | ODbL | Extract reload | Government directories (unverified) | ACCESS VERIFIED 2026-09-17 via Overpass API. Coverage visibly incomplete in the pilot (5 schools mapped). [data spike](../ml/reports/data-spike.md) |
+| S24 | Census 2011 + LGD (§9.1, §10.2) | Village attributes, admin codes | **Real** · `REAL_HISTORICAL` (2011 labelled) | Government terms (to verify) | One-off | OSM attributes | UNVERIFIED |
+| S25 | Survey of India · boundaries (§10.1) | Admin boundaries, jurisdiction | **Real** · `REAL_HISTORICAL` | SoI terms. Official boundary depiction required. | One-off | Community dataset, development only (§10.3) | UNVERIFIED |
+| S26 | GeoRakshak mobile · field/citizen reports and media | Ground evidence (OR-10) | `REAL_LIVE` in operations. **Simulated** (`SIMULATED_DEMO`, team-captured media) in the demo. | Team-captured media | Pushed from mobile (offline sync) | — | n/a |
+| S27 | NDMA · SACHET alerts overlay (§2) | Official-warning context layer | **Post-MVP** · not used | Unknown | — | — | UNVERIFIED. 🔶 Requires approval. |
+| S28 | Zenodo 20783995 · Sarma & Paul (2026) Aizawl landslide dataset (§6.3) | Dated pilot events, map layer (OR-05) | **Real** · `REAL_HISTORICAL` | **CC-BY-4.0** (DOI 10.5281/zenodo.20783995), attribution required | One-off | — | VERIFIED 2026-09-18 (licence re-checked against the Zenodo API): 19 dated events 2016–2025, 18 inside the pilot bbox. **Loaded.** |
+| S29 | Zenodo 8169506 · southern Sikkim mapped landslide polygons + mapped extent (§6.3) | Future true-absence negatives for Stage A | Real if used | CC-BY-4.0, attribution required | One-off | — | VERIFIED 2026-09-18, downloaded, **not yet used**. The best available route to real negatives, since it records the surveyed extent. |
+| S30 | Zenodo 18931430 · Eastern Himalaya large-landslide inventory (§6.3) | Optional extra Stage A labels | Real if used | CC-BY-4.0, attribution required | One-off | — | VERIFIED 2026-09-18, downloaded, **unused** (420 points, 226 inside the NER mask). |
+| S31 | ISRIC · SoilGrids v2 (clay, sand, bulk density, coarse fragments, 5–15 cm) | Stage A soil features | Real (`REAL_HISTORICAL`) **if adopted**; currently candidate only | 🔶 CC-BY 4.0 **as stated by ISRIC, not independently confirmed here**. Attribution "Soil data: ISRIC — World Soil Information, SoilGrids". Confirm before any publication. | Batch via WCS | None (drop the features) | **ENDPOINT VERIFIED 2026-09-18** by this session: `maps.isric.org/mapserv?map=/map/{clay,sand,bdod,cfvo}.map` WCS 2.0.1 returns capabilities (HTTP 200, `Fees: None`, `AccessConstraints: None`). 250 m, 88–97.5°E / 21.5–29.5°N. Missingness 0.6 % training / 0.3 % pilot / 4.8 % NER background; a zero means no data and is never imputed. **Not in the handoff** — the candidate model was not adopted ([v4 evaluation](../ml/reports/evaluation-2026-09-18-v4.md)). |
+| S32 | ISRIC · SoilGrids 2017 `BDTICM` (depth to bedrock) | Stage A soil feature | As S31 | As S31 (v2 has no bedrock-depth layer) | One-off | None | **ENDPOINT VERIFIED 2026-09-18**: `files.isric.org/soilgrids/former/2017-03-10/data/BDTICM_M_250m_ll.tif` (HTTP 200). Missingness 0.2 % training / 0 % pilot / 5.8 % background. Not in the handoff. |
+| S33 | Copernicus · DEM GLO-90 | Hydrology routing for Stage A candidates (flow accumulation, TWI, distance to drainage) | Real, derived (`REAL_HISTORICAL`) if adopted | Copernicus DEM licence; WorldDEM-90 notice recorded | One-off | S11 GLO-30 | **VERIFIED 2026-09-18**: `copernicus-dem-90m.s3.amazonaws.com` tile HTTP 200. 46 tiles (250 MB) for NER-wide routing at 90 m; accumulation is **window-truncated at ≤ 36 km²**, applied identically to every point. GLO-30 (S11) remains the source for slope and relief. |
+| S34 | GLiM global lithological map (PANGAEA doi:10.1594/PANGAEA.788537) | Lithology feature (§6.1 alternative) | **Rejected for now** | CC-BY-3.0 | — | GSI geology (label-only, unusable) | REACHABLE but **REJECTED 2026-09-18**: only gridded to 0.5° (~55 km), which at 500 m cells is a regional constant that would partly encode the spatial CV block. OneGeology WMS returns 404 and its portal fails TLS verification. **Lithology remains unavailable**; GSI's per-record `geology` exists only at positives and would leak the label. |
+
+**Rule:** a row may move to `CONNECTED_LIVE` (or `VERIFIED`) only after a successful real access, recorded with date in the per-source section and in `data_sources`.
 
 ---
 
@@ -123,6 +182,31 @@ Grid proposal (pending ML validation): a uniform analysis grid over the pilot ar
 | Backup option | GPM IMERG (2.2) |
 | Status | UNVERIFIED (access route unknown) |
 
+### 2.7 IMD weather APIs (official requirement OR-17)
+| Field | Details |
+|---|---|
+| Provider | India Meteorological Department (IMD) |
+| Dataset | IMD weather data services through an API (the product set may include current weather, forecasts, nowcasts and warnings; **the exact product list is unverified**) |
+| Geographic coverage | India (per product, to verify) |
+| Update frequency | Per product (to verify) |
+| Access method | The team understands IMD provides API access **on request**, possibly with registration or IP whitelisting. **Unverified.** |
+| API requirements | Unknown until access is granted. **No endpoints, parameters or response formats are recorded here**, and none may be assumed in code. |
+| Availability | Restricted / on request (to verify) |
+| Licensing considerations | IMD terms for API use and display, attribution, and redistribution limits (to verify) |
+| Prototype suitability | **High value, uncertain access.** Product/Communication Lead submits the access request in Phase 0. |
+| Backup option | IMD gridded files (2.1) for real historical IMD data. An approved forecast provider (2.8) for live/forecast. |
+| MVP class | **INTEGRATION-READY:** adapter slot behind the provider-independent `WeatherProvider` interface. The dashboard shows `AWAITING_ACCESS`. |
+| Status | UNVERIFIED |
+
+### 2.8 Weather forecast source for risk forecasts (OR-13)
+| Option | Provenance label | Notes |
+|---|---|---|
+| IMD API forecast products (2.7) | `REAL_LIVE` | Preferred if access is granted in time |
+| Other approved forecast provider (candidate: Open-Meteo, 2.5) | `REAL_LIVE`, marked **non-IMD** | Used only if IMD access isn't granted (H16, approved rule). Provider recorded after a terms check (non-commercial use, attribution, rate limits). Status UNVERIFIED until then. |
+| Replay scenario forecast | `SIMULATED_DEMO` or `REAL_HISTORICAL` | Deterministic demo. Always labelled. |
+
+Forecast records store **issue time**, **valid time** and **lead time**. Forecast rainfall is never shown or stored as an observation.
+
 **Context layer (not model input):** NDMA's SACHET portal publishes official alerts from authorised agencies. It could be shown as an "official warnings" overlay so users can tell GeoRakshak risk apart from official warnings. Access method and terms are unknown. Status: UNVERIFIED. Requires human approval.
 
 ---
@@ -159,7 +243,26 @@ Grid proposal (pending ML validation): a uniform analysis grid over the pilot ar
 | Backup option | ERA5-Land soil water (2.4) |
 | Status | UNVERIFIED |
 
-**MVP recommendation:** use **antecedent rainfall** (for example cumulative rainfall over 3, 7, 15 and 30 days) as the primary wetness proxy. Soil moisture is an optional feature, added only if it improves spatial validation.
+### 3.3 In-situ soil moisture sensors (official requirement OR-02, OR-19)
+| Field | Details |
+|---|---|
+| Provider | **No public, open, real-time in-situ soil moisture sensor feed for NER has been identified by the team.** Possible sources (state agencies, research landslide monitoring deployments, academic partners) are **unknown and unverified**. |
+| Dataset | Point time series: volumetric water content (m³/m³) at stated depth(s), timestamp, station ID, battery/quality flags |
+| Geographic coverage | Point locations only |
+| Update frequency | Typically minutes to hours, depending on the device |
+| Access method | **GeoRakshak sensor ingestion API** (HTTP POST JSON, per-station API key). Our own contract, documented in [api.md §5.5](api.md) (not implemented). |
+| API requirements | Our contract: station registry, units, depth, reading time, quality flag, duplicate-safe via station ID + reading time |
+| Availability | MVP: **virtual stations only** |
+| Licensing considerations | Partner data agreements if real sensors are ever connected |
+| Prototype suitability | **Virtual sensor emulator:** a small number of virtual stations at documented pilot-area points post plausible readings through the real API. Every reading is labelled `SIMULATED_DEMO`, and stations show "Virtual sensor (simulated)." |
+| Backup option | Satellite/reanalysis soil moisture (3.1, 3.2, ERA5-Land 2.4) as real regional context. Antecedent rainfall proxy. |
+| Physical node | **Not in the MVP** (H17 approved: none by default). A future physical node would post to the same API, labelled `REAL_LIVE`, with uncalibrated readings disclosed. |
+| MVP class | OR-02 **LIGHTWEIGHT** (virtual stations through the real ingestion path). OR-19 **INTEGRATION-READY** (general contract, no real device connected). |
+| Status | Ingestion contract designed ([api.md §5.5](api.md), [database.md §4.9–4.10](database.md)). Not implemented. No real source identified. |
+
+**MVP recommendation (revised):**
+- **Trained model features:** antecedent rainfall (3/7/15/30-day) as the wetness proxy, because historical sensor data does not exist for training. Satellite/reanalysis soil moisture may be added if it improves spatial validation.
+- **Sensor readings:** applied as a **documented rule-based modifier** in the rainfall trigger layer (see [ml-strategy.md §2.4](ml-strategy.md)). They are displayed as a monitoring layer. **They are never used to train or to compute reported metrics while they are simulated.**
 
 ---
 
@@ -241,13 +344,14 @@ Notes: compute slope in a projected CRS (for example the appropriate UTM zone fo
 | Dataset | Landslide inventory and National Landslide Susceptibility Mapping (NLSM) outputs |
 | Geographic coverage | Landslide-prone regions of India, including NER (coverage per district to verify) |
 | Update frequency | Irregular / programme-based |
-| Access method | GSI Bhukosh geoportal (viewing and download options to verify) |
-| API requirements | Possibly registration. Download formats to verify. |
-| Availability | To verify (view-only vs. downloadable) |
-| Licensing considerations | GSI terms of use. Attribution. Redistribution limits likely need checking. |
-| Prototype suitability | **High** if downloadable: the most authoritative Indian inventory. The susceptibility map is also a useful **comparison benchmark**. |
-| Backup option | NASA Global Landslide Catalog (6.2) |
-| Status | UNVERIFIED |
+| Access method | **In use (2026-09-18):** the Bhusanket portal's public ArcGIS REST layer, `bhusanket.gsi.gov.in/gisserver/rest/services/Hosted/Public_Portal_Dashboard_Map/FeatureServer/0`. The older Bhukosh geoportal is unreachable from our network (TCP timeouts). |
+| API requirements | None for the point layer: open ArcGIS REST, paged queries. The polygon services require a token (`499 Token Required`). |
+| Availability | Point inventory: available and queried. Polygons and susceptibility rasters: **not available** without credentials. |
+| Licensing considerations | 🔶 Reproduction requires **prior GSI permission by e-mail**, accurate reproduction, and prominent source acknowledgement. Raw data is not redistributed and stays gitignored. Same handling as IMD rainfall (S1). |
+| Prototype suitability | **High.** Surveyed records, 8,691 in the NER states and 132 in the pilot, with movement type, material, trigger, mechanism, geology and dimensions. Replacing the media-derived catalogue removed the measured reporting bias (see [ml-strategy.md §4](ml-strategy.md)). |
+| Limitations | No usable dates (`date`, `date_acc`, `geo_acc` empty for every NER record; 2,270 carry an initiation year) → Stage A only, no dated Stage B. No mapped extent → negatives remain "unlabelled", not true absences. |
+| Backup option | NASA Global Landslide Catalog (6.2), research inventories (6.3) |
+| Status | **VERIFIED 2026-09-18** (independently re-checked). Open team actions: request permission to publish derived maps, and access to the polygon services and record dates. |
 
 ### 6.2 NASA Global Landslide Catalog (GLC)
 | Field | Details |
@@ -345,6 +449,19 @@ Notes: compute slope in a projected CRS (for example the appropriate UTM zone fo
 | Backup option | NDVI derived from Sentinel-2 |
 | Status | UNVERIFIED |
 
+### 7.5 MVP use of satellite data (OR-03, OR-18)
+
+| Use | Source | Class | Label |
+|---|---|---|---|
+| Land cover feature and layer | ESA WorldCover (7.4) | LIGHTWEIGHT (real, precomputed) | `REAL_HISTORICAL` + product version |
+| Vegetation index (for example NDVI) feature | Low-cloud Sentinel-2 composite for a stated date range (7.1) | LIGHTWEIGHT (real, precomputed) | `REAL_HISTORICAL` + date range |
+| Satellite imagery map layer | Same Sentinel-2 composite, true colour | LIGHTWEIGHT (real, precomputed) | Acquisition date range shown on the map |
+| Terrain | Copernicus DEM / SRTM (satellite-derived, §4) | CORE | `REAL_HISTORICAL` |
+| Near-real-time satellite rainfall feed | GPM IMERG (2.2) | **INTEGRATION-READY** (moves to LIGHTWEIGHT if the spike connects it) | `REAL_LIVE` only when really connected |
+| Post-event change detection, SAR/InSAR | Sentinel-2 / Sentinel-1 | POST-MVP | — |
+
+Rules: never show an old image as current, and never show before/after imagery of an event unless the event and dates are real and documented. Monsoon cloud cover makes optical composites hard. Use a dry-season composite for static features and say so.
+
 **Processing platform option:** Google Earth Engine hosts many of the above. It needs registration and acceptance of its terms (non-commercial/research eligibility to verify). 🔶 Requires human approval before we depend on it.
 
 ---
@@ -382,6 +499,21 @@ Notes: compute slope in a projected CRS (for example the appropriate UTM zone fo
 | Status | UNVERIFIED (existence of downloadable GIS data not confirmed) |
 
 ---
+
+### 8.3 Road connectivity status (derived, OR-12)
+| Field | Details |
+|---|---|
+| Provider | **Derived by GeoRakshak.** No external source. |
+| Dataset | Road segments (OSM 8.1, split at intersections) with `status`: `OPEN`, `AT_RISK`, `BLOCKED`, `UNKNOWN`, plus `status_reason`, `status_source` and `updated_at` |
+| Inputs | Risk (current/forecast) per cell (`MODEL_OUTPUT`), verified field reports (`REAL_LIVE` in operations, `SIMULATED_DEMO` in the demo), authority overrides |
+| Update frequency | Every monitoring cycle, and on each verification |
+| Access method | Internal |
+| Licensing considerations | Road geometry inherits ODbL (attribution, share-alike on the derived database) |
+| Prototype suitability | **High.** Segment status + a village "access at risk" rule. **No routing/reachability in the MVP.** |
+| Backup option | Manual status by the authority |
+| Limitations | OSM completeness in rural NER varies. `OPEN` means "no evidence of blockage," not confirmed passable. The UI must say this. |
+
+**Official road status feeds** (for example from state public works departments or national highway agencies): none identified. Unverified. Post-MVP integration candidate.
 
 ## 9. Villages
 
@@ -431,6 +563,21 @@ Notes: compute slope in a projected CRS (for example the appropriate UTM zone fo
 | Status | UNVERIFIED |
 
 ---
+
+### 9.4 Critical infrastructure (OR-09)
+| Field | Details |
+|---|---|
+| Provider | OpenStreetMap contributors |
+| Dataset | Facilities tagged in OSM, for example schools, hospitals/clinics, bridges, shelters, police/fire stations (tag list to be fixed at verification) |
+| Geographic coverage | Global. **Completeness in rural NER is uncertain** and must be sampled for the pilot area. |
+| Update frequency | Continuous |
+| Access method | Geofabrik extract / Overpass API |
+| API requirements | None for extracts |
+| Availability | Public |
+| Licensing considerations | ODbL |
+| Prototype suitability | **Medium–High.** Missing facilities mean exposure counts are lower bounds. The UI must say so. |
+| Backup option | Government facility directories (for example health/school registries). Availability and geocoding unverified. |
+| Status | UNVERIFIED |
 
 ## 10. Administrative boundaries
 
@@ -487,31 +634,41 @@ Some demo moments need events on demand (a heavy-rain scenario, a field report).
 
 | Item | Approach | Label |
 |---|---|---|
-| Rainfall scenario | Scripted rainfall time series over the **real** pilot-area grid. Magnitude is chosen to be plausible and documented as synthetic. | `SIMULATED_DEMO` |
-| Field report | Created live by a team member during the demo | `SIMULATED_DEMO` (demo account) |
-| Users/officers | Fictional names and roles, with no real officials | `SIMULATED_DEMO` |
-| Risk output | Real model applied to simulated input | `MODEL_OUTPUT` (input provenance recorded) |
+| Rainfall scenario | **Preferred:** replay of a real historical rainfall period from IMD gridded data (`REAL_HISTORICAL`). Never claim a landslide happened unless the inventory records one. **Fallback:** scripted rainfall over the real pilot-area grid, documented as synthetic. | `REAL_HISTORICAL` or `SIMULATED_DEMO` |
+| Forecast rainfall (demo) | Scenario continuation for +24/48/72 h | `SIMULATED_DEMO` |
+| Soil moisture sensor readings | Virtual stations (emulator) posting through the real ingestion API | `SIMULATED_DEMO` |
+| Field and citizen reports, photos, videos | Created live by team members. Media captured by the team, never passed off as a real event. | `SIMULATED_DEMO` (demo accounts) |
+| Users, officers, citizens | Fictional names. Phone numbers are team-owned test numbers or fictional (sandbox). | `SIMULATED_DEMO` |
+| SMS dispatches | Rendered and logged in sandbox mode unless a gateway is approved | Status `SANDBOXED` |
+| Risk, forecast risk, road status, priority | Real model and rules applied to mixed inputs | `MODEL_OUTPUT` (input provenance recorded) |
 
 Simulated data never feeds reported model metrics.
 
 ---
 
-## 12. Recommended MVP data stack (pending verification and approval)
+## 12. Recommended MVP data stack (sources pending Phase 0 verification)
 
-| Layer | Primary | Backup |
-|---|---|---|
-| Rainfall (training/history) | IMD gridded 0.25° | CHIRPS |
-| Rainfall (latest) | GPM IMERG Early/Late | ERA5-Land / Open-Meteo |
-| Soil moisture | Antecedent-rainfall proxy (derived) | SMAP / ERA5-Land |
-| Elevation | Copernicus DEM GLO-30 | SRTM / CartoDEM |
-| Slope | Derived from DEM | Derived from backup DEM |
-| Landslide inventory | GSI (Bhukosh) | NASA GLC |
-| Land cover | ESA WorldCover | Bhuvan LULC |
-| Roads | OSM | PMGSY (if available) |
-| Villages | OSM places + Census 2011 attributes | Village polygons (licence permitting) |
-| Admin boundaries | Survey of India + LGD codes | Community dataset (dev only) |
+| Layer | Official req | Primary | Backup | MVP class |
+|---|---|---|---|---|
+| Rainfall (training/history) | OR-01 | IMD gridded 0.25° | CHIRPS | CORE |
+| Rainfall (live) | OR-01, OR-07 | IMD API (if granted) | Approved provider (non-IMD label) or replay | LIGHTWEIGHT |
+| Rainfall forecast | OR-13 | IMD API forecast (if granted) | Approved provider or replay scenario | LIGHTWEIGHT |
+| IMD weather API | OR-17 | Adapter slot, access requested | — | INTEGRATION-READY |
+| Satellite rainfall feed | OR-18 | GPM IMERG adapter | — | INTEGRATION-READY |
+| Soil moisture sensors | OR-02, OR-19 | Virtual stations via sensor API | Post-MVP: physical nodes / partner gateway | LIGHTWEIGHT / INTEGRATION-READY |
+| Soil moisture (model feature) | OR-02 | Antecedent-rainfall proxy (derived) | SMAP / ERA5-Land | CORE (proxy) |
+| Elevation | OR-04 | Copernicus DEM GLO-30 | SRTM / CartoDEM | CORE |
+| Slope | OR-04 | Derived from DEM | Derived from backup DEM | CORE |
+| Landslide inventory | OR-05 | GSI (Bhukosh) | NASA GLC | CORE |
+| Satellite imagery / vegetation | OR-03 | Sentinel-2 composite (precomputed) | Landsat 8/9 | LIGHTWEIGHT |
+| Land cover | OR-03 | ESA WorldCover | Bhuvan LULC | LIGHTWEIGHT |
+| Roads | OR-09 | OSM | PMGSY (if available) | CORE |
+| Road connectivity status | OR-12 | Derived (8.3) | Manual authority status | LIGHTWEIGHT |
+| Villages | OR-09 | OSM places + Census 2011 attributes | Village polygons (licence permitting) | CORE |
+| Critical infrastructure | OR-09 | OSM facilities | Government directories (unverified) | CORE |
+| Admin boundaries | — | Survey of India + LGD codes | Community dataset (dev only) | CORE |
 
-🔶 **Requires human approval:** final selection, after the Phase 0 verification spike.
+🔶 **Requires human approval (H10):** final selection per layer, after the Phase 0 verification spike and licence review.
 
 ## 13. Dataset registry record (template)
 
